@@ -2,6 +2,6 @@
 A simple, java-based blogging platform
 
 ## tasks
-Architecture  
+Architecture (by Remco/Rene?)  
 jira board  
 code!  
