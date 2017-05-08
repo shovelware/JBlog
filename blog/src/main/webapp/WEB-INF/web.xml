@@ -1,7 +1,46 @@
-<!DOCTYPE web-app PUBLIC
- "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
- "http://java.sun.com/dtd/web-app_2_3.dtd" >
+<web-app
+    xmlns="http://java.sun.com/xml/ns/j2ee"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd"
+    version="2.4">
+<!-- General -->
+	<display-name>Cerios Blogger</display-name>
 
-<web-app>
-  <display-name>Archetype Created Web Application</display-name>
+<!-- Servlet configurations -->
+	<!-- Simple Servlet, provide a name, class, description and map to URL /servlet/SimpleServlet -->
+	<servlet>
+		<servlet-name>Simple</servlet-name>
+		<servlet-class>templateTest.jsp</servlet-class>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>Simple</servlet-name>
+		<url-pattern>/</url-pattern>
+	</servlet-mapping>
+	
+
+
+<!-- Session Config -->
+	<session-config>
+		<session-timeout>60</session-timeout>
+	</session-config>
+
+<!-- Welcome Files -->
+	<welcome-file-list>
+		<welcome-file>index.html</welcome-file>
+		<welcome-file>index.htm</welcome-file>
+		<welcome-file>index.jsp</welcome-file>
+	</welcome-file-list>
+
+<!-- Error handling -->
+	<error-page>
+		<error-code>404</error-code>
+		<location>/error404.jsp</location>
+	</error-page>
+
+	<error-page>
+		<exception-type>java.lang.Throwable</exception-type>
+		<location>/errorThrowable.jsp</location>
+	</error-page>
+
 </web-app>
