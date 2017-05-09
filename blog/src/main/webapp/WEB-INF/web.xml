@@ -4,21 +4,18 @@
     xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd"
     version="2.4">
 <!-- General -->
-	<display-name>Cerios Blogger</display-name>
+	<display-name>Cerios Blog Platformr</display-name>
 
 <!-- Servlet configurations -->
-	<!-- Simple Servlet, provide a name, class, description and map to URL /servlet/SimpleServlet -->
 	<servlet>
-		<servlet-name>Simple</servlet-name>
-		<servlet-class>templateTest.jsp</servlet-class>
+		<servlet-name>Test</servlet-name>
+		<servlet-class>nl.cerios.blog.BlogServlet</servlet-class>
 	</servlet>
 
 	<servlet-mapping>
-		<servlet-name>Simple</servlet-name>
+		<servlet-name>Test</servlet-name>
 		<url-pattern>/</url-pattern>
 	</servlet-mapping>
-	
-
 
 <!-- Session Config -->
 	<session-config>

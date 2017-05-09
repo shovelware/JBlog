@@ -14,8 +14,8 @@ public class Profile {
 	//img selfie = "Shuzo.png"
 	
 	Date joinDate = new Date(1299678577);
-		
-	public String getName() { return name;	}
+
+	public String getName() { return name; }
 	public String getMotto() { return motto; }
 	public String getBio(){	return bio;	}
 	public Date getJoinDate() { return joinDate; }
