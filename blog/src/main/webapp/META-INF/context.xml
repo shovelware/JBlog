@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Context reloadable="true" privileged="true">
+       <Resource name="jdbc/blog"
+                 auth="Container"
+                 type="javax.sql.DataSource"
+				 
+                 username="root" password="w0rtel"
+                 driverclassname="com.mysql.jdbc.Driver"
+                 url="jdbc:mysql://localhost/blog:3306"
+				 
+		 		accessToUnderlyingConnectionAllowed="true"
+		 		
+                 maxactive="10"
+                 maxidle="4" />
+</Context>
