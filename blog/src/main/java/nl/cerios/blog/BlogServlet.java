@@ -2,14 +2,14 @@ package nl.cerios.blog;
 
 import java.io.*;
 
-import javax.ejb.EJB;
+//import javax.ejb.EJB;
 import javax.servlet.ServletException;  
 import javax.servlet.http.*;
 
 public class BlogServlet extends HttpServlet{
 	private static final long serialVersionUID = -73186648007060644L;
 	
-	//@EJB
+	//@EJB(name="profileBean")
 	private ProfileBean profileBean = new ProfileBean();
 
 	public String hallo(String name){

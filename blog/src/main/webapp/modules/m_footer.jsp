@@ -1,4 +1,4 @@
-<div id="footer" class="barmodule" style="color:#220088" width="80%">
+<div id="footer" class="barmodule" style="color:#220088">
 
 <!-- Logo -->
 <a style="text-align: left" href = "${pageContext.request.contextPath}">

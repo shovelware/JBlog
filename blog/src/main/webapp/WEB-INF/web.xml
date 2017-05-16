@@ -1,24 +1,26 @@
 <web-app
-    xmlns="http://java.sun.com/xml/ns/j2ee"
+	xmlns="http://java.sun.com/xml/ns/j2ee"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd"
-    version="2.4">
+    xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd"
+    version="3.1">
+    
 <!-- General -->
 	<display-name>Cerios Blog Platform</display-name>
 
 <!-- Servlet configurations -->
 	<servlet>
-		<servlet-name>Test</servlet-name>
+		<servlet-name>TestServlet</servlet-name>
 		<servlet-class>nl.cerios.blog.BlogServlet</servlet-class>
 	</servlet>
 
 	<servlet-mapping>
-		<servlet-name>Test</servlet-name>
+		<servlet-name>TestServlet</servlet-name>
 		<url-pattern>/</url-pattern>
 	</servlet-mapping>
 
 <!-- Database connection -->
 	<resource-ref>
+		<description>SQL Database connection</description>
 		<res-ref-name>jdbc/blog</res-ref-name>
 		<res-type>javax.sql.DataSource</res-type>
 		<res-auth>Container</res-auth>
