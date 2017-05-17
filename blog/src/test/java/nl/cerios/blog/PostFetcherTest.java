@@ -1,6 +1,7 @@
 package nl.cerios.blog;
 
 import junit.framework.TestCase;
+import nl.cerios.blog.database.PostFetcher;
 
 public class PostFetcherTest extends TestCase {
 

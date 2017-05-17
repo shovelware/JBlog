@@ -1,8 +1,8 @@
-package nl.cerios.blog;
+package nl.cerios.blog.database;
 
 import java.time.LocalDateTime;
 
-public class Post {
+public final class Post {
 	private int id;
 	private int blog_id;
 	private LocalDateTime timestamp;

@@ -10,7 +10,11 @@ code!
 Java 8
 Tomcat 9.0.0
 MySQL 5.7
-mysql-connector-java-5.1.42-bin.jar
+JUnit 3.8.1
+MySQL Connector Java 5.1.42
+JSTL 1.2
+SnakeYAML 1.18
+
 
 Adding SQL link $CATALINA_HOME/conf/context.xml
 

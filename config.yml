@@ -1,0 +1,8 @@
+# SQL parameters
+connection:
+   url: jdbc:mysql://localhost:3306/blog
+users:
+ usr: pwd
+	
+# Settings
+postsToRetreive: 5

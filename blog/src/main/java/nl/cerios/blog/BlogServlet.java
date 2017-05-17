@@ -9,6 +9,9 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import nl.cerios.blog.database.Post;
+import nl.cerios.blog.database.PostFetcher;
+
 public class BlogServlet extends HttpServlet{
 	private static final long serialVersionUID = -73186648007060644L;
 	
@@ -21,19 +24,30 @@ public class BlogServlet extends HttpServlet{
 	
 	public void doPost(HttpServletRequest request, HttpServletResponse response)  
             throws ServletException, IOException {
-		response.sendRedirect("http404.jsp");
+		String title = request.getParameter("title");
+		String text = request.getParameter("text");
+		
+		fetcher.addPost(3, 2, title, text);
+
+		ArrayList<Post> posts = fetcher.fetchRecentPosts(5);
+
+		request.setAttribute("posts", posts);
+		
+		RequestDispatcher rd = request.getRequestDispatcher("posts.jsp");
+		
+		rd.forward(request, response);
 	}
 	
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
     	try{
-
     		ArrayList<Post> posts = fetcher.fetchRecentPosts(5);
 
     		request.setAttribute("posts", posts);
-    		RequestDispatcher rd = request.getRequestDispatcher("posts.jsp");
-    		rd.forward(request, response);
     		
+    		RequestDispatcher rd = request.getRequestDispatcher("writePost.jsp");
+    		
+    		rd.forward(request, response);
     	}
     	catch (Exception e){
     		System.err.println(e);
