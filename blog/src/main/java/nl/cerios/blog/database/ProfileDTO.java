@@ -2,13 +2,13 @@ package nl.cerios.blog.database;
 
 import java.time.LocalDateTime;
 
-public final class Profile {
+public final class ProfileDTO {
 	private int id;
 	private String name;
 	private String motto;
 	private LocalDateTime joinDate;
 
-	public Profile(int id, String name, String motto, LocalDateTime joinDate) {
+	public ProfileDTO(int id, String name, String motto, LocalDateTime joinDate) {
 		this.id = id;
 		this.name = name;
 		this.motto = motto;

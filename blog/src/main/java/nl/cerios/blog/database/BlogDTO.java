@@ -1,12 +1,12 @@
 package nl.cerios.blog.database;
 
-public final class Blog {
+public final class BlogDTO {
 	private int id;
 	private int profile_id;
 	private String title;
 	private String description;
 	
-	public Blog(int id, int profile_id, String title, String description){
+	public BlogDTO(int id, int profile_id, String title, String description){
 		this.id = id;
 		this.profile_id = profile_id;
 		this.title = title;

@@ -1,11 +1,11 @@
 package nl.cerios.blog;
 
 import junit.framework.TestCase;
-import nl.cerios.blog.database.PostFetcher;
+import nl.cerios.blog.database.PostHandler;
 
 public class PostFetcherTest extends TestCase {
 
-	PostFetcher fetcher = new PostFetcher();
+	PostHandler fetcher = new PostHandler();
 	
 	public void testFetchRecentPosts() {
 		fetcher.fetchRecentPosts(5);

@@ -1,0 +1,86 @@
+body {
+	font-family:	Verdana, Geneva, Arial, sans-serif;
+	font-size:	medium;
+	color:		#cccccc;
+	background-color: #663399;
+}
+
+h1 {
+	font-weight: 	bold;
+	color:		#ffffff;
+	font-size:	400%;
+}
+
+h2 {
+	font-weight: 	bold;
+	color:		#ffffff;
+	font-size:	200%;
+}
+
+h3 {
+	font-weight: 	bold;
+	color:		#ffffff;
+	font-size:	175%;
+}
+
+h4 {
+	font-weight: 	bold;
+	color:		#ffffff;
+	font-size:	150%;
+}
+
+
+h5 {
+	font-weight: 	bold;
+	color:		#ffffff;
+	font-size:	125%;
+}
+
+scoreh {
+	font-weight: 	bold;
+	color:		#ffffff;
+	font-size:	150%;
+}
+
+score {
+	font-size: 125%;
+}
+
+a {
+	color:	#ff0000;
+}
+
+div {
+    border-style: solid;
+    border-width: medium;
+}
+
+pre {
+}
+
+/*Inputs*/
+
+textarea{
+	background: #cccccc;
+	color:	#000000;
+	resize: none;
+}
+
+textbox{
+	background: #cccccc;
+	color:	#000000;
+}
+
+input[type=text] {
+    font-weight: normal;
+	background: #cccccc;
+	color:	#000000;
+}
+input[type=submit] {
+	background: #cccccc;
+	color:	#000000;
+}
+select {
+	background: #cccccc;
+	color:	#000000;
+}

@@ -6,8 +6,8 @@
 </a>
 		
 <!-- Bottom Right -->
-<p style="float:right">
+<a style="float:right">
 	Copyright notice!
-</p>
+</a>
 
 </div>

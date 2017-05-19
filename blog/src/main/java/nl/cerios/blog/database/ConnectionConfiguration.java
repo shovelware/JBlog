@@ -14,7 +14,7 @@ public class ConnectionConfiguration {
 	
 	public String GetUsername() { return username; }
 	public String GetPassword() { return password; }
-	public int GetPostsToRetreive() { return postLimit; }
+	public int GetPostsToRetrieve() { return postLimit; }
 	
 	public void SetUsername(String username) { this.username = username; }
 	public void SetPassword(String password) { this.password = password; }
