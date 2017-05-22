@@ -1,7 +1,7 @@
-<div id="header" class="barmodule" style="color:#220088">
+<div id="header" class="bar" style="color:#220088">
 
 <!-- Logo -->
-<a style="text-align: left" href = "${pageContext.request.contextPath}">
+<a style="text-align: left" href = "${pageContext.request.contextPath}/index">
 	Go Home! <!-- evt. home, my blog, my page links etc. -->
 </a>
 	

@@ -1,4 +1,4 @@
-<div id=postform>
+<div class=form id=postform>
 	<form method="POST" action="${pageContext.request.contextPath}/post/submit">
 		<h2>WRITE A POST</h2>
 		<br />

@@ -1,7 +1,0 @@
-# SQL parameters
-url: jdbc:mysql://localhost:3306/blog
-username: root
-password: w0rtel
-
-# Settings
-postsToRetreive: 5

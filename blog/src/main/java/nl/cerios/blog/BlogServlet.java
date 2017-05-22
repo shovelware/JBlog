@@ -39,7 +39,6 @@ public class BlogServlet extends HttpServlet{
 				File yamlConfig = new File(getServletContext().getRealPath("/static/config.yml"));
 				InputStream input = new FileInputStream(yamlConfig);
 				
-				System.out.println(yamlConfig.getAbsolutePath());
 				AppConfiguration appConfig = yaml.loadAs(input,  AppConfiguration.class);
 
 				postCount = appConfig.getPostsToRetrieve();

@@ -12,7 +12,7 @@
 </head>
 <body>
 
-	<jsp:include page="m_header.jsp" />
+	<jsp:include page="m_header.jsp" /><div id=top/>
 	<jsp:include page="m_nav.jsp" />
 	
 	<jsp:include page="${param.content}" />

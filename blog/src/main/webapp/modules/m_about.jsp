@@ -1,14 +1,10 @@
-<div class="contentmodule">
+<div class="box">
 This site is a simple blogging platform, built with Java, SQL and HTML.
 
 At the moment it utilizes a Tomcat Server, JDBC driver, and MySQL.
 
 <br/>===
 <table>
-<tr><td>TODO: Add config.yaml and make it work<td></tr>
-<tr><td>===</td></tr>
-<tr><td>TODO: Unify div ids and classes</td></tr>
-<tr><td>TODO: Broaden/rewrite CSS</td></tr>
 <tr><td>===</td></tr>
 <tr><td>TODO: Finish writing SQL interfaces</td></tr>
 <tr><td>TODO: Make SQL interfaces airtight</td></tr>

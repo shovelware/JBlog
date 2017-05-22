@@ -1,59 +1,84 @@
 body {
 	font-family:	Verdana, Geneva, Arial, sans-serif;
 	font-size:	medium;
-	color:		#cccccc;
-	background-color: #663399;
+	color:		#832A0D;
+	background-color: #ED9121;
 }
 
 h1 {
 	font-weight: 	bold;
-	color:		#ffffff;
+	color:		#AA381E;
 	font-size:	400%;
 }
 
 h2 {
 	font-weight: 	bold;
-	color:		#ffffff;
+	color:		#AA381E;
 	font-size:	200%;
 }
 
 h3 {
 	font-weight: 	bold;
-	color:		#ffffff;
+	color:		#AA381E;
 	font-size:	175%;
 }
 
 h4 {
 	font-weight: 	bold;
-	color:		#ffffff;
+	color:		#AA381E;
 	font-size:	150%;
 }
 
 
 h5 {
 	font-weight: 	bold;
-	color:		#ffffff;
+	color:		#AA381E;
 	font-size:	125%;
 }
 
-scoreh {
-	font-weight: 	bold;
-	color:		#ffffff;
-	font-size:	150%;
-}
-
-score {
-	font-size: 125%;
-}
-
 a {
-	color:	#ff0000;
+	color:	#AA381E;
 }
 
-div {
+.bar {
     border-style: solid;
     border-width: medium;
+    border-color: #832A0D;
+    background-color: #FFCC33;
+    padding: 5px;
 }
+
+.box {
+    border-style: solid;
+    border-width: medium;
+    border-color: #832A0D;
+    background-color: #FFCC33;
+    padding: 10px 5px;
+}
+
+.form {
+    border-style: solid;
+    border-width: medium;
+    border-color: #832A0D;
+    background-color: #FFCC33;
+    padding: 10px 5px;
+}
+
+.error {
+	text-align: center;
+    border-style: solid;
+    border-width: medium;
+    border-color: #664228;
+    background-color: #AA381E;
+    color: #FFCC33;
+    padding: 10px 5px;
+}
+
+.error strong{
+	font-weight: bold;
+	font-size:	400%;
+}
+
 
 pre {
 }
@@ -83,4 +108,31 @@ input[type=submit] {
 select {
 	background: #cccccc;
 	color:	#000000;
+}
+
+/*IDs*/
+
+#header {
+}
+
+#navigation{
+}
+
+#navigation.a{
+	text-decoration: none;
+}
+
+#blogform {
+}
+
+#profileform {
+	
+}
+
+#postform {
+	
+}
+
+#footer {
+	
 }

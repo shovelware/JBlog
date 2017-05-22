@@ -1,4 +1,4 @@
-<div id="footer" class="barmodule" style="color:#220088">
+<div id="footer" class="bar" style="color:#220088">
 
 <!-- Logo -->
 <a style="text-align: left" href = "${pageContext.request.contextPath}">
@@ -6,7 +6,7 @@
 </a>
 		
 <!-- Bottom Right -->
-<a style="float:right">
+<a style="float:right" href="#navigation" }>
 	Copyright notice!
 </a>
 
