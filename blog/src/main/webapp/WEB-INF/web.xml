@@ -9,6 +9,7 @@
 	<servlet>
 		<servlet-name>BlogServlet</servlet-name>
 		<servlet-class>nl.cerios.blog.BlogServlet</servlet-class>
+		<load-on-startup>0</load-on-startup>
 	</servlet>
 
 	<servlet-mapping>
