@@ -1,4 +1,4 @@
-<div id="navigation" class="bar" style="color:#220088">
+<div id="navigation" class="bar">
 <a style="text-align: left" href = "${pageContext.request.contextPath}/index">index</a> |
 <a style="text-align: left" href = "${pageContext.request.contextPath}/about">about</a> | 
 <a style="text-align: left" href = "${pageContext.request.contextPath}/recent">recent</a> |

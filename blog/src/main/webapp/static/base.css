@@ -43,7 +43,7 @@ a {
 .bar {
     border-style: solid;
     border-width: medium;
-    border-color: #832A0D;
+    border-color: #AA381E;
     background-color: #FFCC33;
     padding: 5px;
 }
@@ -79,6 +79,9 @@ a {
 	font-size:	400%;
 }
 
+.timestamp{
+	font-weight: bold;
+}
 
 pre {
 }
@@ -108,6 +111,22 @@ input[type=submit] {
 select {
 	background: #cccccc;
 	color:	#000000;
+}
+
+form .linkbutton {
+	font-size:	medium;
+	color:	#AA381E;
+	border: none;
+	background: none;
+	text-decoration: underline;
+	cursor: pointer;
+	display: inline;
+	margin: 0;
+	padding: 0;
+}
+
+form {
+	color:		#832A0D;
 }
 
 /*IDs*/

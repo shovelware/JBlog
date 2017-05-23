@@ -1,4 +1,4 @@
-<div id="footer" class="bar" style="color:#220088">
+<div id="footer" class="bar">
 
 <!-- Logo -->
 <a style="text-align: left" href = "${pageContext.request.contextPath}">

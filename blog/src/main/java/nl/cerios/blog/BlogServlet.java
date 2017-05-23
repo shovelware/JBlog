@@ -13,17 +13,22 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import org.yaml.snakeyaml.Yaml;
 
 import nl.cerios.blog.database.ConnectionFactory;
 import nl.cerios.blog.database.PostDAOSQL;
 import nl.cerios.blog.database.PostDTO;
+import nl.cerios.blog.database.ProfileDAOSQL;
+import nl.cerios.blog.database.ProfileDTO;
 
 public class BlogServlet extends HttpServlet{
 	private static final long serialVersionUID = -73186648007060644L;
 	
 	private PostDAOSQL postDB = new PostDAOSQL();
+	private ProfileDAOSQL profileDB = new ProfileDAOSQL();
+	
 	private int postCount = 2;
 	
 	public void init(ServletConfig config)
@@ -55,31 +60,53 @@ public class BlogServlet extends HttpServlet{
 		try{
 		String url = request.getRequestURI();
 		
-		RequestDispatcher rd = getServletContext().getRequestDispatcher("/http500.jsp");
+		RequestDispatcher rd = getServletContext().getRequestDispatcher("/httperr.jsp");
 		
 			switch (url) {
+				//Submit edited post
 			case "/blog/post/submit":
-				String ptitle = (String) request.getParameter("title");
-				String ptext = (String) request.getParameter("text");
+				if (checkLogin(request.getSession())) {
+					String ptitle = (String) request.getParameter("title");
+					String ptext = (String) request.getParameter("text");
 
-				PostDTO post = new PostDTO(1, 3, LocalDateTime.now(), ptitle, ptext);
-				postDB.InsertPost(post);
+					PostDTO post = new PostDTO(1, 3, LocalDateTime.now(), ptitle, ptext);
+					postDB.InsertPost(post);
 
-				rd = getServletContext().getRequestDispatcher("/postRecent.jsp");
+					rd = getServletContext().getRequestDispatcher("/postRecent.jsp");
+				}
+
+				else {
+					rd = getServletContext().getRequestDispatcher("/http401.jsp");
+				}
 				break;
 
+				//Submit edited blog
 			case "/blog/blog/submit":
-				System.out.println("Pretending to submit a blog");
+				if (checkLogin(request.getSession())) {
+					System.out.println("Pretending to submit a blog");
 
-				rd = getServletContext().getRequestDispatcher("/blogView.jsp");
+					rd = getServletContext().getRequestDispatcher("/blogView.jsp");
+				}
+
+				else {
+					rd = getServletContext().getRequestDispatcher("/http401.jsp");
+				}
 				break;
 
+				//Submit edited profile
 			case "/blog/profile/submit":
-				System.out.println("Pretending to submit a profile");
+				if (checkLogin(request.getSession())) {
+					System.out.println("Pretending to submit a profile");
 
-				rd = getServletContext().getRequestDispatcher("/profileView.jsp");
+					rd = getServletContext().getRequestDispatcher("/profileView.jsp");
+				}
+
+				else {
+					rd = getServletContext().getRequestDispatcher("/http401.jsp");
+				}
 				break;
 				
+				//Login
 			case "/blog/login/submit":
 				String username = (String) request.getParameter("username");
 				String password = (String) request.getParameter("password");
@@ -98,6 +125,12 @@ public class BlogServlet extends HttpServlet{
 					rd = getServletContext().getRequestDispatcher("/login.jsp");
 				}
 				break;
+				
+    			//Logout
+			case "/blog/logout":
+				request.getSession().removeAttribute("loggedInUser");
+				rd = getServletContext().getRequestDispatcher("/index.jsp");
+				break;
 			}
 			
 			rd.forward(request, response);
@@ -115,7 +148,7 @@ public class BlogServlet extends HttpServlet{
     	try{
     		String url = request.getRequestURI();
     		
-    		RequestDispatcher rd = getServletContext().getRequestDispatcher("/http500.jsp");
+    		RequestDispatcher rd = getServletContext().getRequestDispatcher("/httperr.jsp");
     		
     		switch (url)
     		{
@@ -147,9 +180,7 @@ public class BlogServlet extends HttpServlet{
     			
     			//View post
     		case "/blog/post":
-    			
-    			// TODO - fetch real data from DB
-    			PostDTO post = new PostDTO(123,2, LocalDateTime.now(), "Test Title", "Test Tekst");
+    			PostDTO post = postDB.getPostById(1).get(0);
     			
     			request.setAttribute("post", post);
     			rd = getServletContext().getRequestDispatcher("/postView.jsp");
@@ -174,6 +205,9 @@ public class BlogServlet extends HttpServlet{
     			
     			//View profile
     		case "/blog/profile":
+    			ProfileDTO profile = profileDB.getProfileById(1).get(0);
+    			
+    			request.setAttribute("profile", profile);
     			rd = getServletContext().getRequestDispatcher("/profileView.jsp");
     			break;
     			
@@ -181,12 +215,6 @@ public class BlogServlet extends HttpServlet{
     		case "/blog/profile/edit":
     			rd = getServletContext().getRequestDispatcher("/profileEdit.jsp");
     			break;
-    			
-    			//Logout
-			case "/blog/logout":
-				request.getSession().removeAttribute("loggedInUser");
-				rd = getServletContext().getRequestDispatcher("/index.jsp");
-				break;
     			
     		default:
         		String rc = request.getContextPath();
@@ -203,5 +231,17 @@ public class BlogServlet extends HttpServlet{
     		response.sendRedirect("httperr.jsp");
     	}
     	
+    }
+
+    protected boolean checkLogin(HttpSession session)
+    {
+    	boolean loggedIn = false;
+    	
+		if (session.getAttribute("loggedInUser") != null)
+			{
+				loggedIn = true;
+			}
+		
+		return loggedIn;
     }
 }

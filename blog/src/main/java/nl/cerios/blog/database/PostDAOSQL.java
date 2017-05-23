@@ -169,7 +169,7 @@ public class PostDAOSQL implements PostDAO {
 		return false;
 	}
 
-	//Deleting is wasteful
+	//Deleting comes later
 	@Override
 	public boolean DeletePost(int postId) {
 		// TODO Auto-generated method stub
