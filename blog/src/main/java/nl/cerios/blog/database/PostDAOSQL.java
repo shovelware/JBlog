@@ -7,16 +7,17 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
 
 public class PostDAOSQL implements PostDAO {
 
 	@Override
-	public ArrayList<PostDTO> getPostById(int postId) {
+	public List<PostDTO> getPostById(int postId) {
 
 		Connection connection = null;
 		PreparedStatement statement = null;
 		ResultSet resultSet = null;
-		ArrayList<PostDTO> posts = new ArrayList<PostDTO>();
+		List<PostDTO> posts = new ArrayList<PostDTO>();
 
 		try {
 			connection = ConnectionFactory.getInstance().getConnection();
@@ -41,7 +42,7 @@ public class PostDAOSQL implements PostDAO {
 
 	//Unimplemented
 	@Override
-	public ArrayList<PostDTO> getPostByAuthorId(int authorId) {
+	public List<PostDTO> getPostByAuthorId(int authorId) {
 		// TODO Auto-generated method stub
 		//How to get from profileid through blog to post
 		//Or posts should know their author probably?
@@ -49,11 +50,11 @@ public class PostDAOSQL implements PostDAO {
 	}
 
 	@Override
-	public ArrayList<PostDTO> getPostByBlogId(int blogId) {
+	public List<PostDTO> getPostByBlogId(int blogId) {
 		Connection connection = null;
 		PreparedStatement statement = null;
 		ResultSet resultSet = null;
-		ArrayList<PostDTO> posts = new ArrayList<PostDTO>();
+		List<PostDTO> posts = new ArrayList<PostDTO>();
 
 		try {
 			connection = ConnectionFactory.getInstance().getConnection();
@@ -78,27 +79,27 @@ public class PostDAOSQL implements PostDAO {
 
 	//Headers are for later
 	@Override
-	public ArrayList<PostDTO> getPostHeaderById(int postId) {
+	public List<PostDTO> getPostHeaderById(int postId) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 	
 	//Headers are for later
 	@Override
-	public ArrayList<PostDTO> getPostHeaderByAuthorId(int authorId) {
+	public List<PostDTO> getPostHeaderByAuthorId(int authorId) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	//Headers are for later
 	@Override
-	public ArrayList<PostDTO> getPostHeaderByBlogId(int blogId) {
+	public List<PostDTO> getPostHeaderByBlogId(int blogId) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public ArrayList<PostDTO> getPostByTimestamp(LocalDateTime since, int count) {
+	public List<PostDTO> getPostByTimestamp(LocalDateTime since, int count) {
 
 		// !Since does not do anything yet! (From/To maybe?)
 
@@ -106,7 +107,7 @@ public class PostDAOSQL implements PostDAO {
 		Connection connection = null;
 		PreparedStatement statement = null;
 		ResultSet resultSet = null;
-		ArrayList<PostDTO> posts = new ArrayList<PostDTO>();
+		List<PostDTO> posts = new ArrayList<PostDTO>();
 
 		try {
 			connection = ConnectionFactory.getInstance().getConnection();
@@ -175,9 +176,9 @@ public class PostDAOSQL implements PostDAO {
 		return false;
 	}
 
-	private ArrayList<PostDTO> PopulateFromResultSet(ResultSet resultSet) {
+	private List<PostDTO> PopulateFromResultSet(ResultSet resultSet) {
 		
-		ArrayList<PostDTO> posts = new ArrayList<PostDTO>();
+		List<PostDTO> posts = new ArrayList<PostDTO>();
 		
 		//Convert each resultSet row to a PostDTO
 		try {

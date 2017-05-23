@@ -5,12 +5,10 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.List;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletConfig;
-import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -68,29 +66,47 @@ public class BlogServlet extends HttpServlet{
 				postDB.InsertPost(post);
 
 				rd = getServletContext().getRequestDispatcher("/postRecent.jsp");
-				rd.forward(request, response);
 				break;
 
 			case "/blog/blog/submit":
 				System.out.println("Pretending to submit a blog");
 
 				rd = getServletContext().getRequestDispatcher("/blogView.jsp");
-				rd.forward(request, response);
 				break;
 
 			case "/blog/profile/submit":
 				System.out.println("Pretending to submit a profile");
 
 				rd = getServletContext().getRequestDispatcher("/profileView.jsp");
-				rd.forward(request, response);
+				break;
+				
+			case "/blog/login/submit":
+				String username = (String) request.getParameter("username");
+				String password = (String) request.getParameter("password");
+				
+				boolean authenticated = username.equals(password);
+				
+				if (authenticated)
+				{
+					request.getSession().setAttribute("loggedInUser", username);
+					rd = getServletContext().getRequestDispatcher("/index.jsp");
+				}
+				
+				else
+				{
+					request.setAttribute("errorMessage", "Login Failed, please try again");
+					rd = getServletContext().getRequestDispatcher("/login.jsp");
+				}
 				break;
 			}
+			
+			rd.forward(request, response);
 		}
 
 		catch (Exception e) {
 			System.err.println("Servlet POST " + e);
 			request.setAttribute("errdetails", e.getMessage());
-			response.sendRedirect("http500.jsp");
+			response.sendRedirect("httperr.jsp");
 		}
 	}
 
@@ -116,21 +132,26 @@ public class BlogServlet extends HttpServlet{
     			rd = getServletContext().getRequestDispatcher("/about.jsp");
     			break;
     			
+    			//Login
+    		case "/blog/login":
+    			rd=getServletContext().getRequestDispatcher("/login.jsp");
+    			break;
+    			
     			//Recent posts
     		case "/blog/recent":
-        		ArrayList<PostDTO> posts = postDB.getPostByTimestamp(LocalDateTime.now(), postCount);
+        		List<PostDTO> posts = postDB.getPostByTimestamp(LocalDateTime.now(), postCount);
         		request.setAttribute("posts", posts);
     
         		rd = getServletContext().getRequestDispatcher("/postRecent.jsp");
     			break;
     			
-    			
     			//View post
     		case "/blog/post":
-    			//VRAAG: Why doesn't this work?
-    			request.setAttribute("ptitle", "TITTLE");
-    			request.setAttribute("ptext", "This is just a demo post, eventually we should lookup post by id");
-    			request.setAttribute("ptimestamp", LocalDateTime.now());
+    			
+    			// TODO - fetch real data from DB
+    			PostDTO post = new PostDTO(123,2, LocalDateTime.now(), "Test Title", "Test Tekst");
+    			
+    			request.setAttribute("post", post);
     			rd = getServletContext().getRequestDispatcher("/postView.jsp");
     			break;
     			
@@ -161,6 +182,12 @@ public class BlogServlet extends HttpServlet{
     			rd = getServletContext().getRequestDispatcher("/profileEdit.jsp");
     			break;
     			
+    			//Logout
+			case "/blog/logout":
+				request.getSession().removeAttribute("loggedInUser");
+				rd = getServletContext().getRequestDispatcher("/index.jsp");
+				break;
+    			
     		default:
         		String rc = request.getContextPath();
         		String sc = getServletContext().getContextPath();
@@ -173,7 +200,7 @@ public class BlogServlet extends HttpServlet{
     	catch (ServletException e){
     		System.err.println("Servlet GET " + e);
     		request.setAttribute("errdetails", e.getMessage());
-    		response.sendRedirect("http500.jsp");
+    		response.sendRedirect("httperr.jsp");
     	}
     	
     }

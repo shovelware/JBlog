@@ -1,12 +1,12 @@
 package nl.cerios.blog.database;
 
-import java.util.ArrayList;
+import java.util.List;
 
 public interface BlogDAO {
-	ArrayList<BlogDTO> getBlogById(int blogId);
-	ArrayList<BlogDTO> getBlogByProfileId(int profileId);
+	List<BlogDTO> getBlogById(int blogId);
+	List<BlogDTO> getBlogByProfileId(int profileId);
 	
-	ArrayList<BlogDTO> getBlogByTitle(String title);
+	List<BlogDTO> getBlogByTitle(String title);
 	
 	boolean InsertBlog(BlogDTO newBlog);
 	boolean UpdateBlog(BlogDTO updatedBlog);	
