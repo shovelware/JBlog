@@ -96,13 +96,19 @@ public class BlogServlet extends HttpServlet{
 				//Submit edited profile
 			case "/blog/profile/submit":
 				if (checkLogin(request.getSession())) {
-					System.out.println("Pretending to submit a profile");
+					System.out.println("Pretending to edit a profile");
 
 					rd = getServletContext().getRequestDispatcher("/profileView.jsp");
 				}
 
 				else {
-					rd = getServletContext().getRequestDispatcher("/http401.jsp");
+					String pname = (String) request.getParameter("name");
+					String pmotto = (String) request.getParameter("motto");
+
+					ProfileDTO profile = new ProfileDTO(0, pname, pmotto, LocalDateTime.now());
+					profileDB.InsertProfile(profile);
+					
+					rd = getServletContext().getRequestDispatcher("/profileView.jsp");
 				}
 				break;
 				

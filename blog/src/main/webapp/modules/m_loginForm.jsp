@@ -10,7 +10,7 @@
 <div class=form id=loginform>
 	<form method="POST"
 		action="${pageContext.request.contextPath}/login/submit">
-		<input name="username" placeholder="username" autofocus="true"></input>
+		<input name="username" placeholder="username" autofocus></input>
 		<br /><input type="password" placeholder="password" name="password"></input>
 		<br /> <input value="Login" type="SUBMIT">
 	</form>
