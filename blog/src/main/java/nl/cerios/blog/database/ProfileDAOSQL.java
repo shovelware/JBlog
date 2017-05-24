@@ -29,12 +29,13 @@ public class ProfileDAOSQL implements ProfileDAO {
 
 			resultSet = statement.executeQuery();
 
+			profiles = PopulateFromResultSet(resultSet);
 		} catch (SQLException e) {
 			throw new IllegalStateException(e);
 		}
-
-		profiles = PopulateFromResultSet(resultSet);
-
+		finally { 
+			Close(connection, statement, resultSet); 
+			}
 		return profiles;
 	}
 
@@ -77,6 +78,7 @@ public class ProfileDAOSQL implements ProfileDAO {
 
 		profiles = PopulateFromResultSet(resultSet);
 
+		Close(connection, statement, resultSet);
 		return profiles;
 	}
 
@@ -104,8 +106,6 @@ public class ProfileDAOSQL implements ProfileDAO {
 			statement.setString(1, newProfile.getName());
 			statement.setString(2, newProfile.getMotto());
 
-			System.out.println(statement.toString());
-			
 			statement.executeUpdate();
 			
 			success = true;
@@ -113,7 +113,9 @@ public class ProfileDAOSQL implements ProfileDAO {
 		} catch (SQLException e) {
 			throw new IllegalStateException(e);
 		}
-
+		finally {
+			Close(connection, statement, null);
+		}
 		return success;
 	}
 
@@ -131,7 +133,7 @@ public class ProfileDAOSQL implements ProfileDAO {
 		return false;
 	}
 	
-private List<ProfileDTO> PopulateFromResultSet(ResultSet resultSet) {
+	private List<ProfileDTO> PopulateFromResultSet(ResultSet resultSet) {
 		
 		List<ProfileDTO> profiles = new ArrayList<ProfileDTO>();
 		
@@ -152,5 +154,11 @@ private List<ProfileDTO> PopulateFromResultSet(ResultSet resultSet) {
 		
 		return profiles;
 	}
+
+	private void Close(Connection connection, PreparedStatement statement, ResultSet resultSet) {
+	try { if (resultSet != null) resultSet.close(); } catch (Exception e) {};
+	try { if (statement != null) statement.close(); } catch (Exception e) {};
+	try { if (connection != null) connection.close(); } catch (Exception e) {};
+}
 
 }

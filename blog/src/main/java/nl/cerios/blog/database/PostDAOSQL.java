@@ -37,6 +37,7 @@ public class PostDAOSQL implements PostDAO {
 
 		posts = PopulateFromResultSet(resultSet);
 
+		Close(connection, statement, resultSet);
 		return posts;
 	}
 
@@ -67,13 +68,16 @@ public class PostDAOSQL implements PostDAO {
 			statement.setInt(1, blogId);
 
 			resultSet = statement.executeQuery();
+			posts = PopulateFromResultSet(resultSet);
+
 
 		} catch (SQLException e) {
 			throw new IllegalStateException(e);
 		}
 
-		posts = PopulateFromResultSet(resultSet);
-
+		finally {
+			Close(connection, statement, resultSet);
+		}
 		return posts;
 	}
 
@@ -122,12 +126,15 @@ public class PostDAOSQL implements PostDAO {
 
 			resultSet = statement.executeQuery();
 
+			posts = PopulateFromResultSet(resultSet);
 		} catch (SQLException e) {
 			throw new IllegalStateException(e);
 		}
 
-		posts = PopulateFromResultSet(resultSet);
 
+		finally {
+			Close(connection, statement, resultSet);			
+		}
 		return posts;
 	}
 
@@ -159,6 +166,7 @@ public class PostDAOSQL implements PostDAO {
 			throw new IllegalStateException(e);
 		}
 
+		Close(connection, statement, null);
 		return success;
 	}
 
@@ -199,4 +207,9 @@ public class PostDAOSQL implements PostDAO {
 		return posts;
 	}
 
+	private void Close(Connection connection, PreparedStatement statement, ResultSet resultSet) {
+		try { if (resultSet != null) resultSet.close(); } catch (Exception e) {};
+		try { if (statement != null) statement.close(); } catch (Exception e) {};
+		try { if (connection != null) connection.close(); } catch (Exception e) {};
+	}
 }

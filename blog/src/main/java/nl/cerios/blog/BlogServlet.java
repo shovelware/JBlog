@@ -17,6 +17,7 @@ import javax.servlet.http.HttpSession;
 
 import org.yaml.snakeyaml.Yaml;
 
+import nl.cerios.blog.database.Authenticator;
 import nl.cerios.blog.database.ConnectionFactory;
 import nl.cerios.blog.database.PostDAOSQL;
 import nl.cerios.blog.database.PostDTO;
@@ -28,6 +29,8 @@ public class BlogServlet extends HttpServlet{
 	
 	private PostDAOSQL postDB = new PostDAOSQL();
 	private ProfileDAOSQL profileDB = new ProfileDAOSQL();
+	
+	private Authenticator authenticator = new Authenticator();
 	
 	private int postCount = 2;
 	
@@ -102,12 +105,22 @@ public class BlogServlet extends HttpServlet{
 				}
 
 				else {
-					String pname = (String) request.getParameter("name");
-					String pmotto = (String) request.getParameter("motto");
+					String username = (String) request.getParameter("name");
+					String motto = (String) request.getParameter("motto");
+					String password = (String) request.getParameter("password");
 
-					ProfileDTO profile = new ProfileDTO(0, pname, pmotto, LocalDateTime.now());
-					profileDB.InsertProfile(profile);
+					ProfileDTO profile = new ProfileDTO(0, username, motto, LocalDateTime.now());
 					
+					profileDB.InsertProfile(profile);
+					authenticator.InsertPassword(username, password);
+					
+					boolean authenticated = authenticator.AuthenticateUser(username, password);
+					
+					if (authenticated)
+					{
+						request.getSession().setAttribute("loggedInUser", username);
+						rd = getServletContext().getRequestDispatcher("/index.jsp");
+					}
 					rd = getServletContext().getRequestDispatcher("/profileView.jsp");
 				}
 				break;
@@ -117,7 +130,7 @@ public class BlogServlet extends HttpServlet{
 				String username = (String) request.getParameter("username");
 				String password = (String) request.getParameter("password");
 				
-				boolean authenticated = username.equals(password);
+				boolean authenticated = authenticator.AuthenticateUser(username, password);
 				
 				if (authenticated)
 				{
@@ -193,9 +206,15 @@ public class BlogServlet extends HttpServlet{
     			break;
     			
     			//Write new post
-    		case "/blog/post/edit":
-    			rd = getServletContext().getRequestDispatcher("/postEdit.jsp");
-    			break;
+			case "/blog/post/edit":
+				if (checkLogin(request.getSession())) {
+					rd = getServletContext().getRequestDispatcher("/postEdit.jsp");
+				}
+
+				else {
+					rd = getServletContext().getRequestDispatcher("/http401.jsp");
+				}
+				break;
     			
     			
     			//View blog
@@ -204,9 +223,15 @@ public class BlogServlet extends HttpServlet{
     			break;
     			
     			//Add new blog
-    		case "/blog/blog/edit":
-    			rd = getServletContext().getRequestDispatcher("/blogEdit.jsp");
-    			break;
+			case "/blog/blog/edit":
+				if (checkLogin(request.getSession())) {
+					rd = getServletContext().getRequestDispatcher("/blogEdit.jsp");
+				}
+
+				else {
+					rd = getServletContext().getRequestDispatcher("/http401.jsp");
+				}
+				break;
     			
     			
     			//View profile
@@ -219,7 +244,7 @@ public class BlogServlet extends HttpServlet{
     			
     			//Write new post
     		case "/blog/profile/edit":
-    			rd = getServletContext().getRequestDispatcher("/profileEdit.jsp");
+					rd = getServletContext().getRequestDispatcher("/profileEdit.jsp");
     			break;
     			
     		default:
