@@ -1,4 +1,8 @@
-<jsp:include page="/modules/t_template.jsp">
-	<jsp:param name="content" value="m_blog.jsp"/>
-	<jsp:param name="title" value="blogView"/>
-</jsp:include>
+<%@page contentType="text/html" pageEncoding="UTF-8"%>
+<%@taglib prefix="t" tagdir="/WEB-INF/tags"%>
+
+<t:template title="View Blog">
+<jsp:body>
+	<t:blogView/>
+</jsp:body>
+</t:template>

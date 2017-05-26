@@ -73,6 +73,6 @@
 
 	<!-- Fallback error message -->
 	<error-page>
-		<location>/error.jsp</location>
+		<location>/htpperr.jsp</location>
 	</error-page>
 </web-app>

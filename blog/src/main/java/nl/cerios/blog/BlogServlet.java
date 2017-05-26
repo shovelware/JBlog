@@ -250,7 +250,7 @@ public class BlogServlet extends HttpServlet{
     		default:
         		String rc = request.getContextPath();
         		String sc = getServletContext().getContextPath();
-        		System.out.println(rc + " | " + sc + " | " + url);
+        		System.out.println("Default GET path" + rc + " | " + sc + " | " + url);
     			break;
     		}
     		

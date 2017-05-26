@@ -1,4 +1,11 @@
-<jsp:include page="/modules/t_template.jsp">
-	<jsp:param name="content" value="m_err403.jsp"/>
-	<jsp:param name="title" value="HTTP 403"/>
-</jsp:include>
+<%@page contentType="text/html" pageEncoding="UTF-8"%>
+<%@taglib prefix="t" tagdir="/WEB-INF/tags"%>
+
+<t:template title="HTTP 403">
+<jsp:body>
+	<t:error
+	code="HTTP 403"
+	name="FORBIDDEN"
+	message="That which is forbidden is the most tempting.<br />But the answer is still no."/>
+</jsp:body>
+</t:template>

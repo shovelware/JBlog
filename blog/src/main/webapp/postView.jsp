@@ -1,7 +1,8 @@
-<jsp:include page="/modules/t_template.jsp">
-	<jsp:param name="content" value="m_postSingle.jsp"/>
-		<jsp:param name="ptitle" value="${post.title}" />
-		<jsp:param name="ptext" value="${post.text}"  />
-		<jsp:param name="ptimestamp" value="${post.timestamp}" />
-	<jsp:param name="title" value="PostView"/>
-</jsp:include>
+<%@page contentType="text/html" pageEncoding="UTF-8"%>
+<%@taglib prefix="t" tagdir="/WEB-INF/tags"%>
+
+<t:template title="View Post">
+<jsp:body>
+	<t:postView post="${post}"/>
+</jsp:body>
+</t:template>

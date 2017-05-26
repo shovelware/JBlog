@@ -13,5 +13,4 @@
 		<br /><input type="password" placeholder="password" name="password"></input>
 		<br /> <input value="Login" type="SUBMIT">
 	</form>
-
 </div>
