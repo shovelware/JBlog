@@ -1,4 +1,5 @@
+<%@attribute name="blog" required="true" type="nl.cerios.blog.database.BlogDTO"%>
 <div class="box">
-TODO: Write blog view jsp module
-<br/>Question: div class = box, should it be something more id? something else?
+	<h2>${blog.title}</h2> <br/>
+	<div class="description">${blog.description}</div>
 </div>

@@ -38,7 +38,7 @@ public class Authenticator {
 		return success;
 	}
 	
-	private int GetIdByName(String username){
+	public int GetIdByName(String username){
 		int id = 0;
 		Connection connection = null;
 		PreparedStatement statement = null;
@@ -65,9 +65,7 @@ public class Authenticator {
 		}
 		
 		finally{
-			try { if (resultSet != null) resultSet.close(); } catch (Exception e) {};
-			try { if (statement != null) statement.close(); } catch (Exception e) {};
-			try { if (connection != null) connection.close(); } catch (Exception e) {};
+			Close(connection, statement, resultSet);
 		}
 		return id;
 	}
@@ -98,9 +96,7 @@ public class Authenticator {
 			throw new IllegalStateException(e);
 		}
 		finally{
-			try { if (resultSet != null) resultSet.close(); } catch (Exception e) {};
-			try { if (statement != null) statement.close(); } catch (Exception e) {};
-			try { if (connection != null) connection.close(); } catch (Exception e) {};
+			Close(connection, statement, resultSet);
 		}
 		return dbPassword;
 	}
@@ -132,12 +128,17 @@ public class Authenticator {
 			throw new IllegalStateException(e);
 		}
 		finally{
-			try { if (resultSet != null) resultSet.close(); } catch (Exception e) {};
-			try { if (statement != null) statement.close(); } catch (Exception e) {};
-			try { if (connection != null) connection.close(); } catch (Exception e) {};
+			Close(connection, statement, resultSet);
 		}
 		
 		return success;
 	}
 
+	
+	private void Close(Connection connection, PreparedStatement statement, ResultSet resultSet) {
+		try { if (resultSet != null) resultSet.close(); } catch (Exception e) {};
+		try { if (statement != null) statement.close(); } catch (Exception e) {};
+		try { if (connection != null) connection.close(); } catch (Exception e) {};
+	}
+	
 }

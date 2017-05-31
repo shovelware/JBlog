@@ -6,12 +6,12 @@ import java.util.List;
 
 interface PostDAO {
 	
-	List<PostDTO> getPostById(int postId);
+	PostDTO getPostById(int postId);
 	List<PostDTO> getPostByAuthorId(int authorId);
 	List<PostDTO> getPostByBlogId(int blogId);
 	
 	//These functions don't copy body text, for reducing overhead
-	List<PostDTO> getPostHeaderById(int postId);
+	PostDTO getPostHeaderById(int postId);
 	List<PostDTO> getPostHeaderByAuthorId(int authorId);
 	List<PostDTO> getPostHeaderByBlogId(int blogId);
 

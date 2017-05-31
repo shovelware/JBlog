@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface ProfileDAO {
-	List<ProfileDTO> getProfileById(int profileId);
+	ProfileDTO getProfileById(int profileId);
 	List<ProfileDTO> getProfileByPostId(int postId);
 	List<ProfileDTO> getProfileByBlogId(int blogId);
 	

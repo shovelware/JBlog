@@ -18,6 +18,8 @@ import javax.servlet.http.HttpSession;
 import org.yaml.snakeyaml.Yaml;
 
 import nl.cerios.blog.database.Authenticator;
+import nl.cerios.blog.database.BlogDAOSQL;
+import nl.cerios.blog.database.BlogDTO;
 import nl.cerios.blog.database.ConnectionFactory;
 import nl.cerios.blog.database.PostDAOSQL;
 import nl.cerios.blog.database.PostDTO;
@@ -29,10 +31,11 @@ public class BlogServlet extends HttpServlet{
 	
 	private PostDAOSQL postDB = new PostDAOSQL();
 	private ProfileDAOSQL profileDB = new ProfileDAOSQL();
+	private BlogDAOSQL blogDB = new BlogDAOSQL();
 	
 	private Authenticator authenticator = new Authenticator();
 	
-	private int postCount = 2;
+	private int postCount = 5;
 	
 	public void init(ServletConfig config)
 			   throws ServletException {
@@ -134,7 +137,8 @@ public class BlogServlet extends HttpServlet{
 				
 				if (authenticated)
 				{
-					request.getSession().setAttribute("loggedInUser", username);
+					
+					request.getSession().setAttribute("loggedInUser", authenticator.GetIdByName(username));
 					rd = getServletContext().getRequestDispatcher("/index.jsp");
 				}
 				
@@ -157,7 +161,7 @@ public class BlogServlet extends HttpServlet{
 
 		catch (Exception e) {
 			System.err.println("Servlet POST " + e);
-			request.setAttribute("errdetails", e.getMessage());
+			request.setAttribute("errordetails", e.getMessage());
 			response.sendRedirect("httperr.jsp");
 		}
 	}
@@ -173,36 +177,30 @@ public class BlogServlet extends HttpServlet{
     		{
     			//Homepage
     		case "/blog/":
-    			rd = getServletContext().getRequestDispatcher("/index.jsp");
+    			showIndex(request, response);
     			break;
     		case "/blog/index":
-    			rd = getServletContext().getRequestDispatcher("/index.jsp");
+    			showIndex(request, response);
     			break;
     			
     			//About
     		case "/blog/about":
-    			rd = getServletContext().getRequestDispatcher("/about.jsp");
+    			showAbout(request, response);
     			break;
     			
     			//Login
     		case "/blog/login":
-    			rd=getServletContext().getRequestDispatcher("/login.jsp");
+    			showLogin(request, response);
     			break;
     			
     			//Recent posts
     		case "/blog/recent":
-        		List<PostDTO> posts = postDB.getPostByTimestamp(LocalDateTime.now(), postCount);
-        		request.setAttribute("posts", posts);
-    
-        		rd = getServletContext().getRequestDispatcher("/postRecent.jsp");
+    			showRecentPosts(request, response);
     			break;
     			
     			//View post
     		case "/blog/post":
-    			PostDTO post = postDB.getPostById(1).get(0);
-    			
-    			request.setAttribute("post", post);
-    			rd = getServletContext().getRequestDispatcher("/postView.jsp");
+    			showPostById(request, response);
     			break;
     			
     			//Write new post
@@ -219,7 +217,7 @@ public class BlogServlet extends HttpServlet{
     			
     			//View blog
     		case "/blog/blog":
-    			rd = getServletContext().getRequestDispatcher("/blogView.jsp");
+    			showBlogById(request, response);
     			break;
     			
     			//Add new blog
@@ -236,10 +234,7 @@ public class BlogServlet extends HttpServlet{
     			
     			//View profile
     		case "/blog/profile":
-    			ProfileDTO profile = profileDB.getProfileById(1).get(0);
-    			
-    			request.setAttribute("profile", profile);
-    			rd = getServletContext().getRequestDispatcher("/profileView.jsp");
+    			showProfileById(request, response);
     			break;
     			
     			//Write new post
@@ -254,16 +249,219 @@ public class BlogServlet extends HttpServlet{
     			break;
     		}
     		
-    		rd.forward(request, response);
+    		try{
+    			rd.forward(request, response);
+    		}
+    		catch(IllegalStateException e)
+    		{
+    			System.err.println("HURK" + e.getMessage());
+    			//Temporary while refactoring
+    		}
     	}
     	catch (ServletException e){
     		System.err.println("Servlet GET " + e);
-    		request.setAttribute("errdetails", e.getMessage());
+    		request.setAttribute("errordetails", e.getMessage());
     		response.sendRedirect("httperr.jsp");
     	}
     	
     }
 
+    //Comments:
+    //SHOW will attempt to redirect to a new HTML page, failing that it will go to error
+    //SUBMIT will validate data and return status/id
+    //Every request should end in a SHOW, nothing should come after SHOW
+    
+    //Add new stuff [POST] [DB interaction, safeties]
+    //submitNewPost(req, res)postDTO pull this from request [and id from url?]
+    //submitNewBlog(req, res)blogDTO
+    //submitNewProfile(req, res)profileDTO
+    
+    //Update edited stuff [POST] [DB interaction, safeties]
+    //submitEditedPost(req, res, postDTO)
+    //submitEditedBlog(req, res, blogDTO)
+    //submitEditedProfile(req, res, profileDTO)
+    
+    //Auth [POST]
+    //submitLogin(req, res)
+    //submitLogout(req, res)
+    
+    //Admin stuff [POST]
+    //AdminSessionEnable(res, req)
+    //AdminSessionDisable(res, req)
+    
+    //New forms
+    //showNewPostForm(req, res)
+    //showNewBlogForm(req, res)
+    //showNewProfileForm(req, res)
+    
+    //Edit forms [Prepopulate form with DTO content]
+    //showEditPostForm(req, res, postId)   
+    //showEditBlogForm(req, res, blogId)
+    //showEditProfileForm(req, res, profileId)
+    
+    //Generic pages
+    //Show Index
+    protected void showIndex(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
+    {
+    	RequestDispatcher rd = getServletContext().getRequestDispatcher("/index.jsp");
+    	rd.forward(request, response);
+    }
+
+	// Show about page
+	protected void showAbout(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		getServletContext().getRequestDispatcher("/about.jsp").forward(request, response);
+	}
+
+	// Show login page
+	protected void showLogin(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		getServletContext().getRequestDispatcher("/login.jsp").forward(request, response);
+	}
+
+	// Show recent posts
+	protected void showRecentPosts(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		List<PostDTO> posts = postDB.getPostByTimestamp(LocalDateTime.now(), postCount);
+		request.setAttribute("posts", posts);
+
+		getServletContext().getRequestDispatcher("/postRecent.jsp").forward(request, response);
+	}
+
+	// Content pages
+	//Show Post by ID [PARSES URI]
+	protected void showPostById(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		
+		//Parse implicit ID from URL
+		int postId = 0;
+		
+		try {
+			postId = java.lang.Integer.parseInt(request.getParameter("id"));
+		}
+
+		catch (NumberFormatException e) {
+			request.setAttribute("errordetails", "Malformed Post ID!");		
+			getServletContext().getRequestDispatcher("/http500.jsp").forward(request, response);
+		}
+
+		//If the ID looks good, retreive that post
+		if (postId != 0)
+		{	
+			PostDTO post = postDB.getPostById(postId);
+			
+			//If the post is good, punch it into the request
+			if (post != null)
+			{
+				request.setAttribute("post", post);
+				getServletContext().getRequestDispatcher("/postView.jsp").forward(request, response);
+			}
+			
+			//If we haven't put a post in the request, there's been a problem
+			if (request.getAttribute("post") == null)
+			{
+				request.setAttribute("errordetails", "Post with that ID doesn't exist :(");
+				getServletContext().getRequestDispatcher("/http500.jsp").forward(request, response);
+			}
+		}
+	}
+	
+	//Show Blog by ID [PARSES URI]
+    protected void showBlogById(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+    	//Parse implicit ID from URL
+		int blogId = 0;
+		
+		try {
+			blogId = java.lang.Integer.parseInt(request.getParameter("id"));
+		}
+
+		catch (NumberFormatException e) {
+			System.out.println(e);
+			request.setAttribute("errordetails", "Malformed Blog ID!");		
+			getServletContext().getRequestDispatcher("/http500.jsp").forward(request, response);
+		}
+
+		//If the ID looks good, retreive that blog
+		if (blogId != 0)
+		{	
+			BlogDTO blog = blogDB.getBlogById(blogId);
+			
+			//If the blog is good, add it to the request and try grab some posts
+			if (blog != null)
+			{
+				request.setAttribute("blog", blog);
+				
+				List<PostDTO> blogPosts = postDB.getPostByBlogId(blogId);
+				request.setAttribute("posts", blogPosts);
+				
+				getServletContext().getRequestDispatcher("/blogView.jsp").forward(request, response);
+			}
+			
+			//If we haven't put a post in the request, there's been a problem
+			if (request.getAttribute("blog") == null)
+			{
+				request.setAttribute("errordetails", "Unable to retreive a Blog with that ID :(");
+				getServletContext().getRequestDispatcher("/http500.jsp").forward(request, response);
+			}
+		}
+    }
+	
+    //Show Profile by ID [PARSES URI]
+    protected void showProfileById(HttpServletRequest request, HttpServletResponse response)
+    	throws ServletException, IOException {
+    		
+    		//Parse implicit ID from URI
+    		int profileId = 0;
+    		
+    		try {
+    			profileId = java.lang.Integer.parseInt(request.getParameter("id"));
+    		}
+
+    		catch (NumberFormatException e) {
+    			request.setAttribute("errordetails", "Malformed Profile ID!");		
+    			getServletContext().getRequestDispatcher("/http500.jsp").forward(request, response);
+    		}
+
+    		//If the ID looks good, retreive that profile
+    		if (profileId != 0)
+    		{	
+    			ProfileDTO profile = profileDB.getProfileById(profileId);
+    			
+    			//If the post is good, punch it into the request
+    			if (profile != null)
+    			{
+    				request.setAttribute("profile", profile);
+    				getServletContext().getRequestDispatcher("/profileView.jsp").forward(request, response);
+    			}
+    			
+    			//If we haven't put a profile in the request, there's been a problem
+    			if (request.getAttribute("profile") == null)
+    			{
+    				request.setAttribute("errordetails", "Profile with that ID doesn't exist :(");
+    				getServletContext().getRequestDispatcher("/http500.jsp").forward(request, response);
+    			}
+    		}
+    }
+    
+    //showMyProfile(req, res) //Shows logged in profile or error
+    //showMyBlog(req, res) //Shows logged in blog or error
+    
+    //Gets the ID of the currently logged in user, or 0 if nobody's logged in
+    protected int getLoggedInID(HttpSession session)
+    {
+    	int id = 0;
+    	
+    	Object potentialId = session.getAttribute("loggedInUser");
+    	
+    	if (potentialId != null)
+    	{
+    		id = (int)potentialId;
+    	}
+    	return id;
+    	
+    }
+    
     protected boolean checkLogin(HttpSession session)
     {
     	boolean loggedIn = false;
@@ -274,5 +472,17 @@ public class BlogServlet extends HttpServlet{
 			}
 		
 		return loggedIn;
+    }
+    
+    protected boolean checkAdmin(HttpSession session)
+    {
+    	boolean admin = false;
+    	
+    	if (session.getAttribute("admin") != null)
+    	{
+    		admin = true;
+    	}
+    	
+    	return admin;
     }
 }

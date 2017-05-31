@@ -4,96 +4,83 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ProfileDAOSQL implements ProfileDAO {
+public class BlogDAOSQL implements BlogDAO {
 
 	@Override
-	public ProfileDTO getProfileById(int profileId) {
+	public BlogDTO getBlogById(int blogId) {
+
 		Connection connection = null;
 		PreparedStatement statement = null;
 		ResultSet resultSet = null;
-		ProfileDTO profile = null;
+		BlogDTO blog = null;
 
 		try {
 			connection = ConnectionFactory.getInstance().getConnection();
 
 			statement = connection.prepareStatement(
-					"SELECT * FROM profile" +
+					"SELECT * FROM blog" +
 					" WHERE id=?"
+					);
+
+			statement.setInt(1, blogId);
+
+			resultSet = statement.executeQuery();
+			blog = GetFromResultSet(resultSet);
+
+		} catch (SQLException e) {
+			throw new IllegalStateException(e);
+		}
+
+		finally{
+			Close(connection, statement, resultSet);
+		}
+		return blog;
+	}
+
+	@Override
+	public List<BlogDTO> getBlogByProfileId(int profileId) {
+
+		Connection connection = null;
+		PreparedStatement statement = null;
+		ResultSet resultSet = null;
+		List<BlogDTO> blog = new ArrayList<BlogDTO>();
+
+		try {
+			connection = ConnectionFactory.getInstance().getConnection();
+
+			statement = connection.prepareStatement(
+					"SELECT * FROM blog" +
+					" WHERE profile_id=?"
 					);
 
 			statement.setInt(1, profileId);
 
 			resultSet = statement.executeQuery();
 
-			profile = GetFromResultSet(resultSet);
-		} catch (SQLException e) {
-			throw new IllegalStateException(e);
-		}
-		
-		finally { 
-			Close(connection, statement, resultSet); 
-			}
-		return profile;
-	}
-
-	//Unimplemented
-	@Override
-	public List<ProfileDTO> getProfileByPostId(int postId) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	//Unimplemented
-	@Override
-	public List<ProfileDTO> getProfileByBlogId(int blogId) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public List<ProfileDTO> getProfileByName(String name) {
-		Connection connection = null;
-		PreparedStatement statement = null;
-		ResultSet resultSet = null;
-		List<ProfileDTO> profiles = new ArrayList<ProfileDTO>();
-
-		try {
-			connection = ConnectionFactory.getInstance().getConnection();
-
-			statement = connection.prepareStatement(
-					"SELECT * FROM profile" +
-					" WHERE name=?"
-					);
-
-			statement.setString(1, name);
-
-			resultSet = statement.executeQuery();
-			profiles = PopulateFromResultSet(resultSet);
-
+			blog = PopulateFromResultSet(resultSet);
 		} catch (SQLException e) {
 			throw new IllegalStateException(e);
 		}
 
-		finally {
+
+		finally{
 			Close(connection, statement, resultSet);
 		}
-		return profiles;
+		return blog;
 	}
 
-	//Unimplemented (Needed?)
+	//When we get to search we'll get to this
 	@Override
-	public List<ProfileDTO> getProfileByTimestamp(LocalDateTime since, int count) {
+	public List<BlogDTO> getBlogByTitle(String title) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public boolean InsertProfile(ProfileDTO newProfile) {
-
+	public boolean InsertBlog(BlogDTO newBlog) {
 		Connection connection = null;
 		PreparedStatement statement = null;
 		boolean success = false;
@@ -101,13 +88,17 @@ public class ProfileDAOSQL implements ProfileDAO {
 		try {
 			connection = ConnectionFactory.getInstance().getConnection();
 			statement = connection.prepareStatement(
-					"INSERT INTO profile (name, motto)" +
-					" VALUES (?, ?);"
+					"INSERT INTO blog (id, profile_id, title, description)" +
+					" VALUES (?, ?, ?, ?);"
 					);
 			
-			statement.setString(1, newProfile.getName());
-			statement.setString(2, newProfile.getMotto());
+			statement.setInt(1, newBlog.getId());
+			statement.setInt(2, newBlog.getProfileId());
+			statement.setString(3, newBlog.getTitle());
+			statement.setString(4, newBlog.getDescription());
 
+			System.out.println(statement.toString());
+			
 			statement.executeUpdate();
 			
 			success = true;
@@ -115,66 +106,68 @@ public class ProfileDAOSQL implements ProfileDAO {
 		} catch (SQLException e) {
 			throw new IllegalStateException(e);
 		}
+
 		finally {
 			Close(connection, statement, null);
 		}
+		
 		return success;
 	}
 
 	//Updating comes later
 	@Override
-	public boolean UpdateProfile(ProfileDTO updatedProfile) {
+	public boolean UpdateBlog(BlogDTO updatedBlog) {
 		// TODO Auto-generated method stub
 		return false;
 	}
 
-	//Deleting comes later
+	//Deletion comes later
 	@Override
-	public boolean DeleteProfile(int ProfileId) {
+	public boolean DeleteBlog(int blogId) {
 		// TODO Auto-generated method stub
 		return false;
 	}
 	
-	private List<ProfileDTO> PopulateFromResultSet(ResultSet resultSet) {
+	private BlogDTO GetFromResultSet(ResultSet resultSet) {
 		
-		List<ProfileDTO> profiles = new ArrayList<ProfileDTO>();
+		BlogDTO blog = null;
 		
 		//Convert each resultSet row to a PostDTO
 		try {
 			while (resultSet.next()) {
-				ProfileDTO p = new ProfileDTO(
+				blog = new BlogDTO(
 						resultSet.getInt("id"),
-						resultSet.getString("name"),
-						resultSet.getString("motto"),
-						resultSet.getTimestamp("joindate").toLocalDateTime());
-
-				profiles.add(p);
+						resultSet.getInt("profile_id"),
+						resultSet.getString("title"),
+						resultSet.getString("description"));
 			}
 		} catch (SQLException e) {
 			throw new IllegalStateException(e);
 		}
 		
-		return profiles;
+		return blog;
 	}
-
-	private ProfileDTO GetFromResultSet(ResultSet resultSet) {
+	
+	private List<BlogDTO> PopulateFromResultSet(ResultSet resultSet) {
 		
-		ProfileDTO profile = null;
+		List<BlogDTO> blogs = new ArrayList<BlogDTO>();
 		
 		//Convert each resultSet row to a PostDTO
 		try {
 			while (resultSet.next()) {
-				profile = new ProfileDTO(
+				BlogDTO b = new BlogDTO(
 						resultSet.getInt("id"),
-						resultSet.getString("name"),
-						resultSet.getString("motto"),
-						resultSet.getTimestamp("joindate").toLocalDateTime());
+						resultSet.getInt("profile_id"),
+						resultSet.getString("title"),
+						resultSet.getString("description"));
+
+				blogs.add(b);
 			}
 		} catch (SQLException e) {
 			throw new IllegalStateException(e);
 		}
 		
-		return profile;
+		return blogs;
 	}
 
 	private void Close(Connection connection, PreparedStatement statement, ResultSet resultSet) {

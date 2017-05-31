@@ -3,7 +3,7 @@ package nl.cerios.blog.database;
 import java.util.List;
 
 public interface BlogDAO {
-	List<BlogDTO> getBlogById(int blogId);
+	BlogDTO getBlogById(int blogId);
 	List<BlogDTO> getBlogByProfileId(int profileId);
 	
 	List<BlogDTO> getBlogByTitle(String title);

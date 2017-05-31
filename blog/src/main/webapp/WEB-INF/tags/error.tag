@@ -14,8 +14,11 @@
 	</strong>
 	<br /><br />
 	${message}<br />
-	<c:if test="${not empty param.details}">
-		<br/>${param.details}
+	<c:if test="${not empty errordetails}">
+		<br/>
+		<hr/>
+		${errordetails}
+		<hr/>
 	</c:if>
 	<br/>
 </div>

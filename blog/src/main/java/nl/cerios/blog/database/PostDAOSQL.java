@@ -12,12 +12,12 @@ import java.util.List;
 public class PostDAOSQL implements PostDAO {
 
 	@Override
-	public List<PostDTO> getPostById(int postId) {
+	public PostDTO getPostById(int postId) {
 
 		Connection connection = null;
 		PreparedStatement statement = null;
 		ResultSet resultSet = null;
-		List<PostDTO> posts = new ArrayList<PostDTO>();
+		PostDTO post = null;
 
 		try {
 			connection = ConnectionFactory.getInstance().getConnection();
@@ -30,15 +30,16 @@ public class PostDAOSQL implements PostDAO {
 			statement.setInt(1, postId);
 
 			resultSet = statement.executeQuery();
+			post = GetFromResultSet(resultSet);
 
 		} catch (SQLException e) {
 			throw new IllegalStateException(e);
 		}
 
-		posts = PopulateFromResultSet(resultSet);
-
-		Close(connection, statement, resultSet);
-		return posts;
+		finally {
+			Close(connection, statement, resultSet);
+		}
+		return post;
 	}
 
 	//Unimplemented
@@ -70,7 +71,6 @@ public class PostDAOSQL implements PostDAO {
 			resultSet = statement.executeQuery();
 			posts = PopulateFromResultSet(resultSet);
 
-
 		} catch (SQLException e) {
 			throw new IllegalStateException(e);
 		}
@@ -83,7 +83,7 @@ public class PostDAOSQL implements PostDAO {
 
 	//Headers are for later
 	@Override
-	public List<PostDTO> getPostHeaderById(int postId) {
+	public PostDTO getPostHeaderById(int postId) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -131,7 +131,6 @@ public class PostDAOSQL implements PostDAO {
 			throw new IllegalStateException(e);
 		}
 
-
 		finally {
 			Close(connection, statement, resultSet);			
 		}
@@ -165,8 +164,10 @@ public class PostDAOSQL implements PostDAO {
 		} catch (SQLException e) {
 			throw new IllegalStateException(e);
 		}
-
-		Close(connection, statement, null);
+		
+		finally {
+			Close(connection, statement, null);
+		}
 		return success;
 	}
 
@@ -207,6 +208,27 @@ public class PostDAOSQL implements PostDAO {
 		return posts;
 	}
 
+	//Takes the first result from the set and returns it as a DTO
+	private PostDTO GetFromResultSet(ResultSet resultSet)
+	{
+		PostDTO post = null;
+		
+		try {
+			if (resultSet.next()) {
+				post = new PostDTO(
+						resultSet.getInt("id"),
+						resultSet.getInt("blog_id"),
+						resultSet.getTimestamp("timestamp").toLocalDateTime(),
+						resultSet.getString("title"),
+						resultSet.getString("text"));
+			}
+		} catch (SQLException e) {
+			throw new IllegalStateException(e);
+		}
+		
+		return post;
+	}
+	
 	private void Close(Connection connection, PreparedStatement statement, ResultSet resultSet) {
 		try { if (resultSet != null) resultSet.close(); } catch (Exception e) {};
 		try { if (statement != null) statement.close(); } catch (Exception e) {};
