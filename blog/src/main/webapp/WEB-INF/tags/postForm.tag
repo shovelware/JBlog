@@ -1,5 +1,10 @@
+<%@attribute name="blogId" required="true"%>
+<%@attribute name="profileId" required="true"%>
+
 <div class=form id=postform>
 	<form method="POST" action="${pageContext.request.contextPath}/post/submit">
+	<input type="hidden" name="blogId" value="${blogId}">
+	<input type="hidden" name="profileId" value="${profileId}">
 		<h2>WRITE A POST</h2>
 		<br />
 		<input name="title" autofocus></input>

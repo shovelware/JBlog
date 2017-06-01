@@ -3,6 +3,6 @@
 
 <t:template title="Edit Post">
 <jsp:body>
-	<t:postForm/>
+	<t:postForm blogId="${blogId}" profileId="${profileId}"/>
 </jsp:body>
 </t:template>

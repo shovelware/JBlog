@@ -9,9 +9,10 @@
 			<button type="submit" name="submit_param" value="submit_value" class="linkbutton">Logout</button>
 		</form>
 	</c:if>
-
 	<c:if test="${empty sessionScope.loggedInUser}">
-		<a style="float: right"	href="${pageContext.request.contextPath}/login">Login</a>
+		<div style="float: right">
+			<a href="${pageContext.request.contextPath}/login">Login</a> or <a href="${pageContext.request.contextPath}/profile/new">Sign Up</a>
+			</div>
 	</c:if>
 </div>
 
