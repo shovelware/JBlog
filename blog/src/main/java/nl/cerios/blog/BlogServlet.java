@@ -4,8 +4,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.channels.ShutdownChannelGroupException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.servlet.RequestDispatcher;
@@ -17,6 +17,9 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import org.yaml.snakeyaml.Yaml;
+
+import org.owasp.esapi.ESAPI;
+import org.owasp.esapi.errors.ValidationException;
 
 import nl.cerios.blog.database.Authenticator;
 import nl.cerios.blog.database.BlogDAOSQL;
@@ -64,8 +67,7 @@ public class BlogServlet extends HttpServlet{
 	
 	public void doPost(HttpServletRequest request, HttpServletResponse response)  
             throws ServletException, IOException {
-		try{
-			
+		try{			
 			String url = request.getRequestURI();
 		
 			switch (url) {
@@ -77,8 +79,7 @@ public class BlogServlet extends HttpServlet{
 				
 				default:
 	        		String rc = request.getContextPath();
-	        		String sc = getServletContext().getContextPath();
-	        		System.out.println("Default GET path" + rc + " | " + sc + " | " + url);
+	        		System.out.println("Default POST " + rc + "|" + url);
 	        		request.setAttribute("errordetails", "POST: How did you even?");
 	    			getServletContext().getRequestDispatcher("/http500.jsp").forward(request, response);        
 					break;
@@ -98,8 +99,6 @@ public class BlogServlet extends HttpServlet{
     	try{
     		String url = request.getRequestURI();
     		
-    		RequestDispatcher rd = getServletContext().getRequestDispatcher("/httperr.jsp");
-    		
     		switch (url)
     		{
     		case "/blog/":				showIndex(request, response);			break;//Homepage
@@ -117,8 +116,7 @@ public class BlogServlet extends HttpServlet{
 			case "/blog/blog/new":		showLoggedInBlog(request, response);	break; //Add new blog (Unneeded atm)
     		default:
         		String rc = request.getContextPath();
-        		String sc = getServletContext().getContextPath();
-        		System.out.println("Default GET path" + rc + " | " + sc + " | " + url);
+        		System.out.println("Default GET: " + rc + "|" + url);
         	
         		request.setAttribute("errordetails", "GET: How did you even?");
     			showError500(request, response);;        		
@@ -357,7 +355,7 @@ public class BlogServlet extends HttpServlet{
 			{
 				request.setAttribute("blog", blog);
 				
-				List<PostDTO> blogPosts = postDB.getPostByBlogId(blogId);
+				List<PostDTO> blogPosts = sanitize(postDB.getPostByBlogId(blogId));
 				request.setAttribute("posts", blogPosts);
 				
 				getServletContext().getRequestDispatcher("/blogView.jsp").forward(request, response);
@@ -526,5 +524,41 @@ public class BlogServlet extends HttpServlet{
     	}
     	
     	return admin;
+    }
+    
+    protected PostDTO sanitize(PostDTO post)
+    {
+    	PostDTO cleanPost;
+    	
+    	String title = post.getTitle();
+    	String text = post.getText();
+    	
+    	String cleanTitle = "Title";
+    	String cleanText = "Text";
+    	
+    	try
+    	{
+    		cleanTitle = ESAPI.validator().getValidSafeHTML("postTitle", title, 48, true);
+    		cleanText = ESAPI.validator().getValidSafeHTML("postText", text, 64000, true);
+    	} 	
+    	catch (ValidationException e) { System.err.println("Error validating Post"); }
+    		
+    	
+    	cleanPost = new PostDTO(post.getID(), post.getBlogID(), post.getTimestamp(), cleanTitle, cleanText);
+    	
+    	return cleanPost;
+    }
+
+    protected List<PostDTO> sanitize(List<PostDTO> postList)
+    {
+    	List<PostDTO> cleanList = new ArrayList<PostDTO>();
+    	
+    	for (PostDTO p : postList)
+    	{
+    		PostDTO cleanPost = sanitize(p);
+    		cleanList.add(cleanPost);
+    	}
+    	
+    	return cleanList;
     }
 }

@@ -18,8 +18,6 @@
 	<tr><td>===</td></tr>
 	<tr><td>TODO: Finish writing display modules for profile and blog (how display blog)</td></tr>
 	<tr><td>===</td></tr>
-	<tr><td>TODO: Add URI mappings for /post?id=xxxxx (and blog, and profile)</td></tr>
-	<tr><td>===</td></tr>
 	<tr><td>TODO: Investigate removing the /blog/ suffix from everything (WebApp root?)</td></tr>
 	<tr><td>===</td></tr>
 	<tr><td>TODO: Add a favicon (Can't be that hard?)</td></tr>
