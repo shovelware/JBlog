@@ -1,16 +1,18 @@
 package nl.cerios.blog;
 
-import java.io.*;
+import java.io.IOException;
+import java.util.ArrayList;
 
-import javax.ejb.EJB;
-import javax.servlet.ServletException;  
-import javax.servlet.http.*;
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 public class BlogServlet extends HttpServlet{
 	private static final long serialVersionUID = -73186648007060644L;
 	
-	//@EJB
-	private ProfileBean profileBean = new ProfileBean();
+	private PostFetcher fetcher = new PostFetcher();
 
 	public String hallo(String name){
 		String hw = "Hello, " + name + ".";
@@ -24,8 +26,19 @@ public class BlogServlet extends HttpServlet{
 	
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+    	try{
+
+    		ArrayList<Post> posts = fetcher.fetchRecentPosts(5);
+
+    		request.setAttribute("posts", posts);
+    		RequestDispatcher rd = request.getRequestDispatcher("posts.jsp");
+    		rd.forward(request, response);
+    		
+    	}
+    	catch (Exception e){
+    		System.err.println(e);
+    		response.sendRedirect("http500.jsp");
+    	}
     	
-    	profileBean.testFunc();
-    	response.sendRedirect("http404.jsp");
     }
 }
