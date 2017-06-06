@@ -1,0 +1,157 @@
+body {
+	font-family:	Verdana, Geneva, Arial, sans-serif;
+	font-size:	medium;
+	color:		#832A0D;
+	background-color: #ED9121;
+}
+
+h1 {
+	font-weight: 	bold;
+	color:		#AA381E;
+	font-size:	400%;
+}
+
+h2 {
+	font-weight: 	bold;
+	color:		#AA381E;
+	font-size:	200%;
+}
+
+h3 {
+	font-weight: 	bold;
+	color:		#AA381E;
+	font-size:	175%;
+}
+
+h4 {
+	font-weight: 	bold;
+	color:		#AA381E;
+	font-size:	150%;
+}
+
+
+h5 {
+	font-weight: 	bold;
+	color:		#AA381E;
+	font-size:	125%;
+}
+
+a {
+	color:	#AA381E;
+}
+
+.bar {
+    border-style: solid;
+    border-width: medium;
+    border-color: #AA381E;
+    background-color: #FFCC33;
+    padding: 5px;
+}
+
+.box {
+    border-style: solid;
+    border-width: medium;
+    border-color: #832A0D;
+    background-color: #FFCC33;
+    padding: 10px 5px;
+}
+
+.form {
+    border-style: solid;
+    border-width: medium;
+    border-color: #832A0D;
+    background-color: #FFCC33;
+    padding: 10px 5px;
+}
+
+.error {
+	text-align: center;
+    border-style: solid;
+    border-width: medium;
+    border-color: #664228;
+    background-color: #AA381E;
+    color: #FFCC33;
+    padding: 10px 5px;
+}
+
+.error strong{
+	font-weight: bold;
+	font-size:	400%;
+}
+
+.timestamp{
+	font-weight: bold;
+}
+
+pre {
+}
+
+/*Inputs*/
+
+textarea{
+	background: #cccccc;
+	color:	#000000;
+	resize: none;
+}
+
+textbox{
+	background: #cccccc;
+	color:	#000000;
+}
+
+input[type=text] {
+    font-weight: normal;
+	background: #cccccc;
+	color:	#000000;
+}
+input[type=submit] {
+	background: #cccccc;
+	color:	#000000;
+}
+select {
+	background: #cccccc;
+	color:	#000000;
+}
+
+form .linkbutton {
+	font-size:	medium;
+	color:	#AA381E;
+	border: none;
+	background: none;
+	text-decoration: underline;
+	cursor: pointer;
+	display: inline;
+	margin: 0;
+	padding: 0;
+}
+
+form {
+	color:		#832A0D;
+}
+
+/*IDs*/
+
+#header {
+}
+
+#navigation{
+}
+
+#navigation.a{
+	text-decoration: none;
+}
+
+#blogform {
+}
+
+#profileform {
+	
+}
+
+#postform {
+	
+}
+
+#footer {
+	
+}
