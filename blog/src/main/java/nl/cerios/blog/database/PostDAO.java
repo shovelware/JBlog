@@ -1,7 +1,6 @@
 package nl.cerios.blog.database;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 interface PostDAO {

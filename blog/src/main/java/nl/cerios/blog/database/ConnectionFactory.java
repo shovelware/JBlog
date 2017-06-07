@@ -29,7 +29,7 @@ public class ConnectionFactory {
 	
 	public Connection getConnection() throws SQLException {
 		Connection conn = null;
-		conn = DriverManager.getConnection(config.getUrl(), config.getUsername(), config.getPassword());
+		conn = DriverManager.getConnection(config.getUrl() + "?useSSL=false", config.getUsername(), config.getPassword());
 		return conn;
 	}
 

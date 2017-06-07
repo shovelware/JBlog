@@ -43,13 +43,12 @@ public class BlogServlet extends HttpServlet{
 	
 	public void init(ServletConfig config)
 			   throws ServletException {
-		
 		super.init(config);
 		
 		try {
 			Yaml yaml = new Yaml();
 			
-				File yamlConfig = new File(getServletContext().getRealPath("/static/config.yml"));
+				File yamlConfig = new File(getServletContext().getRealPath("/config.yml"));
 				InputStream input = new FileInputStream(yamlConfig);
 				
 				AppConfiguration appConfig = yaml.loadAs(input,  AppConfiguration.class);
@@ -59,7 +58,6 @@ public class BlogServlet extends HttpServlet{
 			
 			ConnectionFactory.getInstance().init(appConfig);
 		}
-		
 		catch(Exception e){
 			System.err.println("Servlet init: " + e);
 		}
@@ -81,7 +79,7 @@ public class BlogServlet extends HttpServlet{
 	        		String rc = request.getContextPath();
 	        		System.out.println("Default POST " + rc + "|" + url);
 	        		request.setAttribute("errordetails", "POST: How did you even?");
-	    			getServletContext().getRequestDispatcher("/http500.jsp").forward(request, response);        
+	        		showError500(request, response);
 					break;
 			}
 
@@ -145,10 +143,11 @@ public class BlogServlet extends HttpServlet{
 			String ptext = (String) request.getParameter("text");
 
 			PostDTO post = new PostDTO(0, blogId, LocalDateTime.now(), ptitle, ptext);
-			postDB.InsertPost(post);
+			PostDTO cleanPost = sanitize(post);
+			
+			postDB.InsertPost(cleanPost);
 
 			getServletContext().getRequestDispatcher("/postRecent.jsp").forward(request, response);
-
 		}
 
 		else {
@@ -156,10 +155,10 @@ public class BlogServlet extends HttpServlet{
 		}
 	}
 
-    //Automatic for now, this is uesless
+    //Automatic for now, this is useless [evt. db interaction]
 	protected void submitNewBlog(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		
+		//sanitize input
 	}
 	
     //[DB ACCESS PROFILE, AUTH, BLOG]
@@ -175,15 +174,17 @@ public class BlogServlet extends HttpServlet{
 			String password = (String) request.getParameter("password");
 
 			ProfileDTO profile = new ProfileDTO(0, username, motto, LocalDateTime.now());
+			ProfileDTO cleanProfile = sanitize(profile);
 
-			profileDB.InsertProfile(profile);
+			profileDB.InsertProfile(cleanProfile);
 			authenticator.InsertPassword(username, password);
 
 			int profileId = authenticator.GetIdByName(username);
 
 			BlogDTO newBlog = new BlogDTO(0, profileId, "", "");
+			BlogDTO cleanBlog = sanitize(newBlog);
 			
-			blogDB.InsertBlog(newBlog);
+			blogDB.InsertBlog(cleanBlog);
 			
 			boolean authenticated = authenticator.AuthenticateUser(username, password);
 
@@ -286,7 +287,8 @@ public class BlogServlet extends HttpServlet{
 	protected void showRecentPosts(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		List<PostDTO> posts = postDB.getPostByTimestamp(LocalDateTime.now(), postCount);
-		request.setAttribute("posts", posts);
+		List<PostDTO> cleanPosts = sanitize(posts);		
+		request.setAttribute("posts", cleanPosts);
 
 		getServletContext().getRequestDispatcher("/postRecent.jsp").forward(request, response);
 	}
@@ -302,21 +304,22 @@ public class BlogServlet extends HttpServlet{
 		try {
 			postId = java.lang.Integer.parseInt(request.getParameter("id"));
 		}
-
 		catch (NumberFormatException e) {
 			request.setAttribute("errordetails", "Malformed Post ID!");
 			getServletContext().getRequestDispatcher("/http500.jsp").forward(request, response);
 		}
 
 		//If the ID looks good, retrieve that post
-		if (postId != 0)
+		if (postId > 0)
 		{	
 			PostDTO post = postDB.getPostById(postId);
 			
 			//If the post is good, punch it into the request
 			if (post != null)
 			{
-				request.setAttribute("post", post);
+				PostDTO cleanPost = sanitize(post);
+				request.setAttribute("post", cleanPost);
+				
 				getServletContext().getRequestDispatcher("/postView.jsp").forward(request, response);
 			}
 			
@@ -338,25 +341,25 @@ public class BlogServlet extends HttpServlet{
 		try {
 			blogId = java.lang.Integer.parseInt(request.getParameter("id"));
 		}
-
 		catch (NumberFormatException e) {
-			System.out.println(e);
 			request.setAttribute("errordetails", "Malformed Blog ID!");		
 			getServletContext().getRequestDispatcher("/http500.jsp").forward(request, response);
 		}
 
 		//If the ID looks good, retrieve that blog
-		if (blogId != 0)
+		if (blogId > 0)
 		{	
 			BlogDTO blog = blogDB.getBlogById(blogId);
 			
 			//If the blog is good, add it to the request and try grab some posts
 			if (blog != null)
 			{
-				request.setAttribute("blog", blog);
+				BlogDTO cleanBlog = sanitize(blog);
+				request.setAttribute("blog", cleanBlog);
 				
-				List<PostDTO> blogPosts = sanitize(postDB.getPostByBlogId(blogId));
-				request.setAttribute("posts", blogPosts);
+				List<PostDTO> blogPosts = postDB.getPostByBlogId(blogId);
+				List<PostDTO> cleanPosts = sanitize(blogPosts);
+				request.setAttribute("posts", cleanPosts);
 				
 				getServletContext().getRequestDispatcher("/blogView.jsp").forward(request, response);
 			}
@@ -370,24 +373,6 @@ public class BlogServlet extends HttpServlet{
 		}
     }
 
-    //Errors
-    protected void showError401(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
-		getServletContext().getRequestDispatcher("/http401.jsp").forward(request, response);
-    }
-    protected void showError403(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
-		getServletContext().getRequestDispatcher("/http403.jsp").forward(request, response);
-    } 
-    protected void showError404(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
-		getServletContext().getRequestDispatcher("/http404.jsp").forward(request, response);
-    }
-    protected void showError500(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
-		getServletContext().getRequestDispatcher("/http500.jsp").forward(request, response);
-    }
-    
     //[PARSES URI] Show Profile by ID
     protected void showProfileById(HttpServletRequest request, HttpServletResponse response)
     	throws ServletException, IOException {
@@ -398,12 +383,11 @@ public class BlogServlet extends HttpServlet{
     		try {
     			profileId = java.lang.Integer.parseInt(request.getParameter("id"));
     		}
-
     		catch (NumberFormatException e) {
     			request.setAttribute("errordetails", "Malformed Profile ID!");		
     			getServletContext().getRequestDispatcher("/http500.jsp").forward(request, response);
     		}
-
+    		
     		//If the ID looks good, retrieve that profile
     		if (profileId != 0)
     		{	
@@ -412,7 +396,9 @@ public class BlogServlet extends HttpServlet{
     			//If the profile is good, add it to the request
     			if (profile != null)
     			{
-    				request.setAttribute("profile", profile);
+    				ProfileDTO cleanProfile = sanitize(profile);
+    				request.setAttribute("profile", cleanProfile);
+    				
     				getServletContext().getRequestDispatcher("/profileView.jsp").forward(request, response);
     			}
     			
@@ -443,7 +429,9 @@ public class BlogServlet extends HttpServlet{
 				//If the profile is good, punch it into the request
 				if (profile != null)
 				{
-					request.setAttribute("profile", profile);
+					ProfileDTO cleanProfile = sanitize(profile);
+					request.setAttribute("profile", cleanProfile);
+					
 					getServletContext().getRequestDispatcher("/profileView.jsp").forward(request, response);
 				}
 				
@@ -472,17 +460,36 @@ public class BlogServlet extends HttpServlet{
     		
     		if (blog != null && profile != null)
     		{
-    			request.setAttribute("blog", blog);
+    			BlogDTO	cleanBlog = sanitize(blog);
+    			request.setAttribute("blog", cleanBlog);
     			
 				List<PostDTO> blogPosts = postDB.getPostByBlogId(blog.getId());
-				request.setAttribute("posts", blogPosts);
+				List<PostDTO> cleanPosts = sanitize(blogPosts);				
+				request.setAttribute("posts", cleanPosts);
 				
 				getServletContext().getRequestDispatcher("/blogView.jsp").forward(request, response);
     		}
     	}
     	
     	else showError401(request, response);
-    	
+    }
+    
+    //Errors
+    protected void showError401(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		getServletContext().getRequestDispatcher("/http401.jsp").forward(request, response);
+    }
+    protected void showError403(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		getServletContext().getRequestDispatcher("/http403.jsp").forward(request, response);
+    } 
+    protected void showError404(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		getServletContext().getRequestDispatcher("/http404.jsp").forward(request, response);
+    }
+    protected void showError500(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		getServletContext().getRequestDispatcher("/http500.jsp").forward(request, response);
     }
     
     //[PARSES SESSION] Gets the ID of the currently logged in user, or 0 if nobody's logged in
@@ -524,6 +531,50 @@ public class BlogServlet extends HttpServlet{
     	}
     	
     	return admin;
+    }
+    
+    protected ProfileDTO sanitize(ProfileDTO profile)
+    {
+    	ProfileDTO cleanProfile;
+    	
+    	String name = profile.getName();
+    	String motto = profile.getMotto();
+    	
+    	String cleanName = "Name";
+    	String cleanMotto = "Motto";
+    	
+    	try
+    	{
+    		cleanName = ESAPI.validator().getValidSafeHTML("profileName", name, 16, true);
+    		cleanMotto = ESAPI.validator().getValidSafeHTML("profileMotto", motto, 32, true);
+    	} 	
+    	catch (ValidationException e) { System.err.println("Error validating Profile"); }
+    	
+    	cleanProfile = new ProfileDTO(profile.getId(), cleanName, cleanMotto, profile.getJoinDate());
+    	
+    	return cleanProfile;
+    }
+    
+    protected BlogDTO sanitize(BlogDTO blog)
+    {
+    	BlogDTO cleanBlog;
+    	
+    	String title = blog.getTitle();
+    	String description = blog.getDescription();
+    	
+    	String cleanTitle = "Title";
+    	String cleanDescription = "Description";
+
+    	try
+    	{
+    		cleanTitle = ESAPI.validator().getValidSafeHTML("blogTitle", title, 48, true);
+    		cleanDescription = ESAPI.validator().getValidSafeHTML("blogDescription", description, 32000, true);
+    	} 	
+    	catch (ValidationException e) { System.err.println("Error validating Blog"); }
+    	
+    	cleanBlog = new BlogDTO(blog.getId(), blog.getProfileId(), cleanTitle, cleanDescription);
+    	
+    	return cleanBlog;
     }
     
     protected PostDTO sanitize(PostDTO post)

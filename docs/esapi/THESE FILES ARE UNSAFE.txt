@@ -1,0 +1,6 @@
+ESAPI wants these files to live in specific places which at the moment 
+is beyond me to link to Eclipse and git while remaining open for 
+other IDEs.
+ 
+Thus these are to be taken as functional but not necessarily up to 
+date. But, it's good to have a record of their contents either way.
