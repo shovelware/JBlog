@@ -9,9 +9,10 @@
 		<form method="POST"
 			action="${pageContext.request.contextPath}/profile/submit">
 			<h2>JOIN US</h2>
-			<input placeholder="name" name="name" autofocus></input> <br />
-			<input placeholder="motto" name="motto"></input> <br />
+			<input placeholder="Name" name="name" autofocus></input> <br />
 			<input placeholder="password" name="password" type="password"></input> <br />
+			<br/>
+			<input placeholder="Motto" name="motto"></input> <br />
 			<input value="SUBMIT" type="SUBMIT">
 		</form>
 	</div>

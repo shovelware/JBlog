@@ -152,7 +152,7 @@ public class PostDAOSQL implements PostDAO {
 			
 			statement.setString(1, newPost.getTitle());
 			statement.setString(2, newPost.getText());
-			statement.setInt(3, newPost.getBlogID());
+			statement.setInt(3, newPost.getBlogId());
 
 			System.out.println(statement.toString());
 			
