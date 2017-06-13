@@ -67,23 +67,27 @@ public class BlogServlet extends HttpServlet{
 	public void doPost(HttpServletRequest request, HttpServletResponse response)  
             throws ServletException, IOException {
 		try{			
-			String url = request.getRequestURI();
+    		String url = request.getRequestURI().substring(request.getContextPath().length());
 		
 			switch (url) {
-				case "/blog/post/submit":		submitNewPost(request, response);		break; //Submit new post
-				case "/blog/blog/submit":												break; //Submit new blog	
-				case "/blog/profile/submit":	submitNewProfile(request, response);	break; //Submit new profile
+				case "/post/submit":		submitNewPost(request, response);		break; //Submit new post
+				case "/blog/submit":												break; //Submit new blog	
+				case "/profile/submit":	submitNewProfile(request, response);	break; //Submit new profile
 				
-				case "/blog/post/resubmit":		submitEditedPost(request, response);	break; //Submit edited post
-				case "/blog/blog/resubmit":		submitEditedBlog(request, response);	break; //Submit edited blog	
-				case "/blog/profile/resubmit":	submitEditedProfile(request, response);	break; //Submit edited profile
-				
-				case "/blog/login/submit":		submitLogin(request, response);			break; //Login
-				case "/blog/logout":			submitLogout(request, response);		break; //Logout
+				case "/post/resubmit":		submitEditedPost(request, response);	break; //Submit edited post
+				case "/blog/resubmit":		submitEditedBlog(request, response);	break; //Submit edited blog	
+				case "/profile/resubmit":	submitEditedProfile(request, response);	break; //Submit edited profile
+
+	    		case "/post":				showPostById(request, response);		break; //View post?id=
+	    		case "/blog":				showBlogById(request, response);		break; //View blog?id=
+	    		case "/profile":			showProfileById(request, response);		break; //View profile?id=
+	    		
+				case "/login/submit":		submitLogin(request, response);			break; //Login
+				case "/logout":			submitLogout(request, response);		break; //Logout
 				
 				default:
 	        		String rc = request.getContextPath();
-	        		System.out.println("Default POST " + rc + "|" + url);
+	        		System.out.println("Default POST " + rc + url);
 	        		request.setAttribute("errordetails", "POST: How did you even?");
 	        		showError500(request, response);
 					break;
@@ -91,7 +95,7 @@ public class BlogServlet extends HttpServlet{
 
 		}
 
-		catch (Exception e) {
+		catch (ServletException e) {
 			System.err.println("Servlet POST " + e);
 			request.setAttribute("errordetails", e.getMessage());
 			showError500(request, response);
@@ -101,29 +105,39 @@ public class BlogServlet extends HttpServlet{
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
     	try{
-    		String url = request.getRequestURI();
+    		String url = request.getRequestURI().substring(request.getContextPath().length());
     		
     		switch (url)
     		{
-    		case "/blog/":				showIndex(request, response);			break;//Homepage
-    		case "/blog/index":			showIndex(request, response);			break;
-    		case "/blog/about":			showAbout(request, response);			break; //About
-    		case "/blog/login":			showLogin(request, response);			break; //Login
-    		case "/blog/recent":		showRecentPosts(request, response);		break; //Recent posts
-    		case "/blog/post":			showPostById(request, response);		break; //View post?id=
-    		case "/blog/blog":			showBlogById(request, response);		break; //View blog?id=
-    		case "/blog/profile":		showProfileById(request, response);		break; //View profile?id=
-    		case "/blog/blog/me":		showLoggedInBlog(request, response);	break; //View My Blog
-    		case "/blog/profile/me":	showLoggedInProfile(request, response);	break; //View My Profile
-			case "/blog/post/new":		showNewPostForm(request, response);		break; //Write new post
-    		case "/blog/profile/new":	showNewProfileForm(request, response);  break; //Add new Profile
-			case "/blog/blog/new":		showLoggedInBlog(request, response);	break; //Add new blog (Unneeded atm)
-			case "/blog/post/edit":		showEditPostForm(request, response);	break; //Edit post
-    		case "/blog/profile/edit":	showEditProfileForm(request, response); break; //Edit Profile
-			case "/blog/blog/edit":		showEditBlogForm(request, response);	break; //Edit blog
+    		case "":				showIndex(request, response);			break;//Homepage
+    		case "/index":			showIndex(request, response);			break;
+    		case "/about":			showAbout(request, response);			break; //About
+    		case "/login":			showLogin(request, response);			break; //Login
+    		case "/recent":		showRecentPosts(request, response);		break; //Recent posts
+    		
+    		case "/post":			showPostById(request, response);		break; //View post?id=
+    		case "/blog":			showBlogById(request, response);		break; //View blog?id=
+    		case "/profile":		showProfileById(request, response);		break; //View profile?id=
+    		
+    		case "/blog/me":		showLoggedInBlog(request, response);	break; //View My Blog
+    		case "/profile/me":	showLoggedInProfile(request, response);	break; //View My Profile
+    		
+			case "/post/new":		showNewPostForm(request, response);		break; //Write new post
+    		case "/profile/new":	showNewProfileForm(request, response);  break; //Add new Profile
+    		
+			case "/blog/new":		showLoggedInBlog(request, response);	break; //Add new blog (Unneeded atm)
+			
+			case "/post/edit":		showEditPostForm(request, response);	break; //Edit post
+    		case "/profile/edit":	showEditProfileForm(request, response); break; //Edit Profile
+			case "/blog/edit":		showEditBlogForm(request, response);	break; //Edit blog
+			
+			case "/post/find":		showFindPostForm(request, response);	break; //Find post
+			case "/blog/find":		showFindBlogForm(request, response);	break; //Find blog
+			case "/profile/find":	showFindProfileForm(request, response);	break; //Find profile
+			
     		default:
         		String rc = request.getContextPath();
-        		System.out.println("Default GET: " + rc + "|" + url);
+        		System.out.println("Default GET: " + rc + url);
         	
         		request.setAttribute("errordetails", "GET: How did you even?");
     			showError500(request, response);;        		
@@ -143,8 +157,7 @@ public class BlogServlet extends HttpServlet{
     //GET ~~ SHOW: will attempt to redirect to a new HTML page, failing that it will go to error
     //POST ~~ SUBMIT: will validate data and then SHOW a page based on result
     
-    //Add new stuff [POST] [DB interaction, safeties]
-	
+    //Add new post [POST] [DB interaction, safeties]
     protected void submitNewPost(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		if (checkLoggedIn(request.getSession())) {
@@ -156,15 +169,13 @@ public class BlogServlet extends HttpServlet{
 			PostDTO cleanPost = sanitize(post);
 			
 			postDB.InsertPost(cleanPost);
-
-			getServletContext().getRequestDispatcher("/postRecent.jsp").forward(request, response);
+			getServletContext().getRequestDispatcher("/post.jsp").forward(request, response);
 		}
 
 		else {
 			showError401(request, response);
 		}
 	}
-	
 
     //Automatic for now, this is useless [evt. db interaction]
 	protected void submitNewBlog(HttpServletRequest request, HttpServletResponse response)
@@ -224,7 +235,7 @@ public class BlogServlet extends HttpServlet{
 			
 			request.setAttribute("post", cleanPost);
 			
-			//postDB.UpdatePost(cleanPost); TODO
+			postDB.UpdatePost(cleanPost);
 
 			getServletContext().getRequestDispatcher("/postView.jsp").forward(request, response);
 		}
@@ -254,12 +265,7 @@ public class BlogServlet extends HttpServlet{
 				showLoggedInProfile(request, response);
 			}
 	}
-
-    //Update edited stuff [POST] [DB interaction, safeties]
-    //submitEditedPost(req, res, postDTO)
-    //submitEditedBlog(req, res, blogDTO)
-    //submitEditedProfile(req, res, profileDTO)
-    
+	
     //Auth [POST]
 	protected void submitLogin(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
@@ -279,13 +285,12 @@ public class BlogServlet extends HttpServlet{
 		}
 	}
 	
-	
 	protected void submitLogout(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		request.getSession().removeAttribute("loggedInUser");
 		showIndex(request, response);
 	}
-	
+
     
     //Admin stuff [POST]
     //AdminSessionEnable(res, req)
@@ -309,7 +314,7 @@ public class BlogServlet extends HttpServlet{
 			showError401(request, response);
 		}
 	}
-	
+    //showNewBlogForm(req, res)
 	protected void showNewProfileForm(HttpServletRequest request, HttpServletResponse response) 
 			throws ServletException, IOException {
 		if (!checkLoggedIn(request.getSession())) {
@@ -329,26 +334,31 @@ public class BlogServlet extends HttpServlet{
 			
 			try {
 				postId = java.lang.Integer.parseInt(request.getParameter("id"));
+				int profileId = getLoggedInId(request.getSession());
+				PostDTO post = postDB.getPostById(postId);
+				int postOwner = blogDB.getProfileByBlogId(post.getBlogId());
+				
+				//Make sure we own the post
+				if (postOwner == getLoggedInId(request.getSession()))
+				{
+					request.setAttribute("profileId", profileId);
+					request.setAttribute("post", post);
+				
+					getServletContext().getRequestDispatcher("/postEdit.jsp").forward(request, response);
+				}
+				
+				else showError401(request, response);
 			}
 			catch (NumberFormatException e) {
 				request.setAttribute("errordetails", "Malformed Post ID!");
 				getServletContext().getRequestDispatcher("/http500.jsp").forward(request, response);
 			}
-			
-			int profileId = getLoggedInId(request.getSession());
-			PostDTO post = postDB.getPostById(postId);
-			
-			request.setAttribute("profileId", profileId);
-			request.setAttribute("post", post);
-			
-			getServletContext().getRequestDispatcher("/postEdit.jsp").forward(request, response);
 		}
 
 		else {
 			showError401(request, response);
 		}
 	}
-	
 	protected void showEditProfileForm(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		if (checkLoggedIn(request.getSession())) {
@@ -359,7 +369,6 @@ public class BlogServlet extends HttpServlet{
 			showError404(request, response);
 		}
 	}
-	
 	protected void showEditBlogForm(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		if (checkLoggedIn(request.getSession())) {
@@ -371,12 +380,22 @@ public class BlogServlet extends HttpServlet{
 		}
 	}
 	
-    //showNewBlogForm(req, res)
-    
+	protected void showFindPostForm(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		getServletContext().getRequestDispatcher("/postFind.jsp").forward(request, response);
+	}
+	
+	protected void showFindBlogForm(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		getServletContext().getRequestDispatcher("/blogFind.jsp").forward(request, response);
+	}
+	
+	protected void showFindProfileForm(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		getServletContext().getRequestDispatcher("/profileFind.jsp").forward(request, response);
+	}
+	
     ////Edit forms [Prepopulate form with DTO content]
-    //showEditPostForm(req, res, postId)   
-    //showEditBlogForm(req, res, blogId)
-    //showEditProfileForm(req, res, profileId)
     
     //Generic pages
 	protected void showIndex(HttpServletRequest request, HttpServletResponse response)
@@ -385,21 +404,18 @@ public class BlogServlet extends HttpServlet{
     	rd.forward(request, response);
     }
 	
-
 	// Show about page
 	protected void showAbout(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		getServletContext().getRequestDispatcher("/about.jsp").forward(request, response);
 	}
 	
-
 	// Show login page
 	protected void showLogin(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		getServletContext().getRequestDispatcher("/login.jsp").forward(request, response);
 	}
 	
-
 	// Show recent posts
 	protected void showRecentPosts(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
@@ -410,7 +426,6 @@ public class BlogServlet extends HttpServlet{
 		getServletContext().getRequestDispatcher("/postRecent.jsp").forward(request, response);
 	}
 	
-
 	//// Content pages
 	//Show Post by ID [PARSES URI]
 	protected void showPostById(HttpServletRequest request, HttpServletResponse response)
@@ -449,7 +464,6 @@ public class BlogServlet extends HttpServlet{
 			}
 		}
 	}
-	
 	
 	//Show Blog by ID [PARSES URI]
     protected void showBlogById(HttpServletRequest request, HttpServletResponse response)
@@ -492,7 +506,6 @@ public class BlogServlet extends HttpServlet{
 		}
     }
     
-
     //[PARSES URI] Show Profile by ID
     protected void showProfileById(HttpServletRequest request, HttpServletResponse response)
     	throws ServletException, IOException {
@@ -519,6 +532,17 @@ public class BlogServlet extends HttpServlet{
     				ProfileDTO cleanProfile = sanitize(profile);
     				request.setAttribute("profile", cleanProfile);
     				
+    				try{
+    					BlogDTO cleanBlog = sanitize(blogDB.getBlogByProfileId(cleanProfile.getId()).get(0));
+    					request.setAttribute("blog", cleanBlog);
+    				}
+    				
+    				catch (Exception e)
+    				{
+    					System.out.println(e.getMessage());
+    				}
+    				
+    				
     				getServletContext().getRequestDispatcher("/profileView.jsp").forward(request, response);
     			}
     			
@@ -530,7 +554,6 @@ public class BlogServlet extends HttpServlet{
     			}
     		}
     }
-    
     
     //[PARSES SESSION] //Shows logged in profile or error
     protected void showLoggedInProfile(HttpServletRequest request, HttpServletResponse response)
@@ -552,7 +575,15 @@ public class BlogServlet extends HttpServlet{
 				{
 					ProfileDTO cleanProfile = sanitize(profile);
 					request.setAttribute("profile", cleanProfile);
-					
+					try{
+    					BlogDTO cleanBlog = sanitize(blogDB.getBlogByProfileId(cleanProfile.getId()).get(0));
+    					request.setAttribute("blog", cleanBlog);
+    				}
+    				
+    				catch (Exception e)
+    				{
+    					System.out.println(e.getMessage());
+    				}
 					getServletContext().getRequestDispatcher("/profileView.jsp").forward(request, response);
 				}
 				
@@ -596,8 +627,7 @@ public class BlogServlet extends HttpServlet{
     	else showError401(request, response);
     }
     
-    //Errors
-  
+    //Errors  
     protected void showError401(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		getServletContext().getRequestDispatcher("/http401.jsp").forward(request, response);
@@ -635,8 +665,6 @@ public class BlogServlet extends HttpServlet{
     }
 
     //[PARSES SESSION] Returns true if logged in
-   
-
     protected boolean checkLoggedIn(HttpSession session)
     {
     	boolean loggedIn = false;
@@ -648,7 +676,6 @@ public class BlogServlet extends HttpServlet{
 		
 		return loggedIn;
     }
-    
     
     //[PARSES SESSION]
     protected boolean checkAdmin(HttpSession session)
@@ -662,7 +689,7 @@ public class BlogServlet extends HttpServlet{
     	
     	return admin;
     }
-    
+
     
     protected ProfileDTO sanitize(ProfileDTO profile)
     {

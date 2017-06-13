@@ -79,6 +79,42 @@ public class BlogDAOSQL implements BlogDAO {
 		return null;
 	}
 
+	public int getProfileByBlogId(int id)
+	{
+		int profileId = 0;
+		
+		Connection connection = null;
+		PreparedStatement statement = null;
+		ResultSet resultSet = null;
+
+		try {
+			connection = ConnectionFactory.getInstance().getConnection();
+
+			statement = connection.prepareStatement(
+					"SELECT profile_id FROM blog" +
+					" WHERE id=?"
+					);
+
+			statement.setInt(1, id);
+
+			resultSet = statement.executeQuery();
+
+			if (resultSet.next())
+			{
+				profileId = resultSet.getInt("profile_id");
+			}
+		} catch (SQLException e) {
+			throw new IllegalStateException(e);
+		}
+
+
+		finally{
+			Close(connection, statement, resultSet);
+		}
+		
+		return profileId;
+	}
+	
 	@Override
 	public boolean InsertBlog(BlogDTO newBlog) {
 		Connection connection = null;

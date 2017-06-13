@@ -32,3 +32,27 @@ SnakeYAML 1.18
 ESAPI 2.1.0.1  
 	[Included as standard maven dependency]  
 	[Included config files at "userfolder\esapi": antisamy-esapi.xml, esapi.properties, validation.properties]
+	
+SSL Keystore = ceriosks  
+
+server.xml [keystore has one self-signed certificate for localhost.  
+```
+<Connector port="8443" protocol="HTTP/1.1" SSLEnabled="true"
+		maxThreads="150" scheme="https" secure="true"
+		clientAuth="false" sslProtocol="TLS"
+		keystoreFile="ceriosks"
+		keystorePass="drowssap" />
+```
+
+web.xml [Causes all requests to redirect to SSL]  
+```
+	<security-constraint>
+		<web-resource-collection>
+			<web-resource-name>SSL Redirect</web-resource-name>
+			<url-pattern>/*</url-pattern>
+		</web-resource-collection>
+		<user-data-constraint>
+			<transport-guarantee>CONFIDENTIAL</transport-guarantee>
+		</user-data-constraint>
+	</security-constraint>
+```

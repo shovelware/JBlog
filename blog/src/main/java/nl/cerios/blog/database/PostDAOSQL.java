@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -153,8 +154,6 @@ public class PostDAOSQL implements PostDAO {
 			statement.setString(1, newPost.getTitle());
 			statement.setString(2, newPost.getText());
 			statement.setInt(3, newPost.getBlogId());
-
-			System.out.println(statement.toString());
 			
 			statement.executeUpdate();
 			
@@ -173,8 +172,42 @@ public class PostDAOSQL implements PostDAO {
 	//Updating comes later
 	@Override
 	public boolean UpdatePost(PostDTO updatedPost) {
-		// TODO Auto-generated method stub
-		return false;
+		Connection connection = null;
+		PreparedStatement statement = null;
+		boolean success = false;
+
+		try {
+			connection = ConnectionFactory.getInstance().getConnection();
+			statement = connection.prepareStatement(
+					"UPDATE post " +
+					" SET title = ?, text = ?" + 
+					" WHERE id = ?", Statement.RETURN_GENERATED_KEYS
+					);
+			
+			statement.setString(1, updatedPost.getTitle());
+			statement.setString(2, updatedPost.getText());
+			statement.setInt(3, updatedPost.getId());
+
+			System.out.println(statement.toString());
+			
+			statement.executeUpdate();
+			
+			///Return post id
+			ResultSet rs = statement.getGeneratedKeys();
+			if (rs.next()) {
+			  int newPostId = rs.getInt(1);
+			}
+			
+			success = true;
+
+		} catch (SQLException e) {
+			throw new IllegalStateException(e);
+		}
+		
+		finally {
+			Close(connection, statement, null);
+		}
+		return success;
 	}
 
 	//Deleting comes later

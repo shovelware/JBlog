@@ -4,24 +4,31 @@
 <t:template title="About">
 <jsp:body>
 	<div class="box">
-	This site is a simple blogging platform, built with Java, SQL and HTML.
+	This site is a simple blogging platform.
+	<br/>
+	<br/>At the moment it runs a Java Servlet on Tomcat. 
+	<br/>For persistence we use a JDBC driver and a MySQL Database.
+	<br/>For security we have XSS prevention and SQL injection protection.
 	
-	At the moment it utilizes a Tomcat Server, JDBC driver, and MySQL.
-	
-	<br/>===
+	<br/>
 	<table>
 	<tr><td>===</td></tr>
 	<tr><td>TODO: Finish writing SQL interfaces</td></tr>
 	<tr><td>TODO: Make SQL interfaces airtight</td></tr>
+	<tr><td>TODO: Maybe actually rewrite DAO system?</td></tr>
+	<tr><td>===</td></tr>
+	<tr><td>TODO: Add Biz layer</td></tr>
 	<tr><td>===</td></tr>
 	<tr><td>TODO: Add unit tests of all sorts</td></tr>
 	<tr><td>===</td></tr>
-	<tr><td>TODO: Finish writing display modules for profile and blog (how display blog)</td></tr>
+	<tr><td>TODO: Improve ESAPI HTML validation (It leaves " around and &amp;lt; etc. behind)</td></tr>
 	<tr><td>===</td></tr>
 	<tr><td>TODO: Investigate removing the /blog/ suffix from everything (WebApp root?)</td></tr>
 	<tr><td>===</td></tr>
-	<tr><td>TODO: Add a favicon (Can't be that hard?)</td></tr>
-	<tr><td>TODO: Fix that damned SQL SSL warning one way or another.</td></tr>
+	<tr><td>TODO: Finish implementing blog and profile editing</td></tr>
+	<tr><td>===</td></tr>
+	<tr><td>TODO: Implement Pictures in posts and SQL (How tho?)</td></tr>
+	<tr><td>===</td></tr>
 	</table>
 	</div>
 </jsp:body>

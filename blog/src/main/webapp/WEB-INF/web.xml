@@ -23,6 +23,16 @@
 		<url-pattern>*.ico</url-pattern>
 	</servlet-mapping>
 
+	<security-constraint>
+		<web-resource-collection>
+			<web-resource-name>SSL Redirect</web-resource-name>
+			<url-pattern>/*</url-pattern>
+		</web-resource-collection>
+		<user-data-constraint>
+			<transport-guarantee>CONFIDENTIAL</transport-guarantee>
+		</user-data-constraint>
+	</security-constraint>
+
 	<!-- Session Config -->
 	<session-config>
 		<session-timeout>60</session-timeout>

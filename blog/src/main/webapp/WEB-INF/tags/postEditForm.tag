@@ -16,7 +16,7 @@
 		
 		<h2>EDIT POST</h2>
 		<input placeholder="Title" name="title" value="${title}" autofocus></input> <br />
-		<textarea placeholder="Post Content" rows="6" cols="49" name="text">"${text}"</textarea>
+		<textarea placeholder="Post Content" rows="6" cols="49" name="text">${text}</textarea>
 		<br /> <input value="SUBMIT" type="SUBMIT">
 	</form>
 </div>
