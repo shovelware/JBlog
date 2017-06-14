@@ -1,16 +1,22 @@
+<%@taglib prefix="t" tagdir="/WEB-INF/tags"%>
 <div id="navigation" class="bar">
-	<a style="text-align: left" href = "${pageContext.request.contextPath}/index">index</a> |
-	<a style="text-align: left" href = "${pageContext.request.contextPath}/about">about</a> | 
-	<a style="text-align: left" href = "${pageContext.request.contextPath}/recent">recent</a> |
-	<a style="text-align: left" href = "${pageContext.request.contextPath}/post/find">/post</a>
-	<a style="text-align: left" href = "${pageContext.request.contextPath}/post/new">/new</a>
-	<a style="text-align: left" href = "${pageContext.request.contextPath}/post/edit">/edit</a> 	| 
-	<a style="text-align: left" href = "${pageContext.request.contextPath}/blog/find">/blog</a>
-	<a style="text-align: left" href = "${pageContext.request.contextPath}/blog/me">/me</a>
-	<a style="text-align: left" href = "${pageContext.request.contextPath}/blog/edit">/edit</a> 	|
-	<a style="text-align: left" href = "${pageContext.request.contextPath}/profile/find">/profile</a>
-	<a style="text-align: left" href = "${pageContext.request.contextPath}/profile/me">/me</a>
-	<a style="text-align: left" href = "${pageContext.request.contextPath}/profile/edit">/edit</a>	|
+	<a href="${pageContext.request.contextPath}/index">index</a>
+	|
+	<a href = "${pageContext.request.contextPath}/about">about</a>
+	|
+	<a href = "${pageContext.request.contextPath}/recent">recent</a>
+	|
+	<a href = "${pageContext.request.contextPath}/post/find">post</a>
+	<t:ifLoggedIn><a href = "${pageContext.request.contextPath}/post/new">new</a></t:ifLoggedIn>
+	|
+	<a href = "${pageContext.request.contextPath}/blog/find">blog</a>
+	<t:ifLoggedIn><a href = "${pageContext.request.contextPath}/blog/me">me</a></t:ifLoggedIn>
+	<t:ifLoggedIn><a href = "${pageContext.request.contextPath}/blog/edit">edit</a></t:ifLoggedIn>
+	|
+	<a href = "${pageContext.request.contextPath}/profile/find">profile</a>
+	<t:ifLoggedIn><a href = "${pageContext.request.contextPath}/profile/me">me</a></t:ifLoggedIn>
+	<t:ifLoggedIn><a href = "${pageContext.request.contextPath}/profile/edit">edit</a></t:ifLoggedIn>
+	|
 	<div style="float: right"><a  href = "${pageContext.request.contextPath}/http401.jsp"> 401</a>
 		<a href = "${pageContext.request.contextPath}/http403.jsp"> 403</a>
 		<a href = "${pageContext.request.contextPath}/http404.jsp"> 404</a>

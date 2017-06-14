@@ -72,7 +72,7 @@ public class BlogServlet extends HttpServlet{
 			switch (url) {
 				case "/post/submit":		submitNewPost(request, response);		break; //Submit new post
 				case "/blog/submit":												break; //Submit new blog	
-				case "/profile/submit":	submitNewProfile(request, response);	break; //Submit new profile
+				case "/profile/submit":		submitNewProfile(request, response);	break; //Submit new profile
 				
 				case "/post/resubmit":		submitEditedPost(request, response);	break; //Submit edited post
 				case "/blog/resubmit":		submitEditedBlog(request, response);	break; //Submit edited blog	
@@ -113,7 +113,7 @@ public class BlogServlet extends HttpServlet{
     		case "/index":			showIndex(request, response);			break;
     		case "/about":			showAbout(request, response);			break; //About
     		case "/login":			showLogin(request, response);			break; //Login
-    		case "/recent":		showRecentPosts(request, response);		break; //Recent posts
+    		case "/recent":			showRecentPosts(request, response);		break; //Recent posts
     		
     		case "/post":			showPostById(request, response);		break; //View post?id=
     		case "/blog":			showBlogById(request, response);		break; //View blog?id=
@@ -169,7 +169,7 @@ public class BlogServlet extends HttpServlet{
 			PostDTO cleanPost = sanitize(post);
 			
 			postDB.InsertPost(cleanPost);
-			getServletContext().getRequestDispatcher("/post.jsp").forward(request, response);
+			showLoggedInBlog(request, response);
 		}
 
 		else {
@@ -438,8 +438,9 @@ public class BlogServlet extends HttpServlet{
 			postId = java.lang.Integer.parseInt(request.getParameter("id"));
 		}
 		catch (NumberFormatException e) {
-			request.setAttribute("errordetails", "Malformed Post ID!");
+			request.setAttribute("errordetails", "Malformed Post ID: " + postId);
 			getServletContext().getRequestDispatcher("/http500.jsp").forward(request, response);
+			return;
 		}
 
 		//If the ID looks good, retrieve that post
@@ -452,16 +453,22 @@ public class BlogServlet extends HttpServlet{
 			{
 				PostDTO cleanPost = sanitize(post);
 				request.setAttribute("post", cleanPost);
-				
+
 				getServletContext().getRequestDispatcher("/postView.jsp").forward(request, response);
 			}
 			
 			//If we haven't put a post in the request, there's been a problem
 			if (request.getAttribute("post") == null)
 			{
-				request.setAttribute("errordetails", "Post with that ID doesn't exist :(");
+				request.setAttribute("errordetails", "Post with ID " + postId + " doesn't exist.");
 				getServletContext().getRequestDispatcher("/http500.jsp").forward(request, response);
 			}
+		}
+		
+		else
+		 {
+			request.setAttribute("errordetails", "Malformed Post ID: " + postId);
+			getServletContext().getRequestDispatcher("/http500.jsp").forward(request, response);
 		}
 	}
 	
@@ -475,8 +482,9 @@ public class BlogServlet extends HttpServlet{
 			blogId = java.lang.Integer.parseInt(request.getParameter("id"));
 		}
 		catch (NumberFormatException e) {
-			request.setAttribute("errordetails", "Malformed Blog ID!");		
+			request.setAttribute("errordetails", "Malformed Blog ID: " + blogId);		
 			getServletContext().getRequestDispatcher("/http500.jsp").forward(request, response);
+			return;
 		}
 
 		//If the ID looks good, retrieve that blog
@@ -500,9 +508,14 @@ public class BlogServlet extends HttpServlet{
 			//If we haven't put a post in the request, there's been a problem
 			if (request.getAttribute("blog") == null)
 			{
-				request.setAttribute("errordetails", "Unable to retrieve a Blog with that ID :(");
+				request.setAttribute("errordetails", "Blog with ID " + blogId + " doesn't exist.");
 				getServletContext().getRequestDispatcher("/http500.jsp").forward(request, response);
 			}
+		}
+		
+		else  {
+			request.setAttribute("errordetails", "Malformed Blog ID: " + blogId);
+			getServletContext().getRequestDispatcher("/http500.jsp").forward(request, response);
 		}
     }
     
@@ -519,6 +532,7 @@ public class BlogServlet extends HttpServlet{
     		catch (NumberFormatException e) {
     			request.setAttribute("errordetails", "Malformed Profile ID!");		
     			getServletContext().getRequestDispatcher("/http500.jsp").forward(request, response);
+    			return;
     		}
     		
     		//If the ID looks good, retrieve that profile
@@ -549,9 +563,14 @@ public class BlogServlet extends HttpServlet{
     			//If we haven't put a profile in the request, there's been a problem
     			if (request.getAttribute("profile") == null)
     			{
-    				request.setAttribute("errordetails", "Profile with that ID doesn't exist :(");
+    				request.setAttribute("errordetails", "Profile with ID " + profileId + " doesn't exist.");
     				getServletContext().getRequestDispatcher("/http500.jsp").forward(request, response);
     			}
+    		}
+    		
+    		else {
+    			request.setAttribute("errordetails", "Malformed Profile ID: " + profileId);
+    			getServletContext().getRequestDispatcher("/http500.jsp").forward(request, response);
     		}
     }
     
@@ -744,6 +763,7 @@ public class BlogServlet extends HttpServlet{
     	String title = post.getTitle();
     	String text = post.getText();
     	
+    	
     	String cleanTitle = "Title";
     	String cleanText = "Text";
     	
@@ -753,7 +773,6 @@ public class BlogServlet extends HttpServlet{
     		cleanText = ESAPI.validator().getValidSafeHTML("postText", text, 64000, true);
     	} 	
     	catch (ValidationException e) { System.err.println("Error validating Post"); }
-    		
     	
     	cleanPost = new PostDTO(post.getId(), post.getBlogId(), post.getTimestamp(), cleanTitle, cleanText);
     	
