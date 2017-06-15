@@ -3,6 +3,6 @@
 
 <t:template title="Edit Blog">
 <jsp:body>
-	<t:blogEditForm/>
+	<t:blogEditForm blog="${blog}"/>
 </jsp:body>
 </t:template>

@@ -9,7 +9,7 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
-<c:url value="favicon.ico" var="favicon" />
+<c:url value="/favicon.ico" var="favicon" />
 <c:url value="/static/base.css" var="css" />
 <link rel="icon" type="image/x-icon" href="${favicon}"/>
 <link rel="stylesheet" href="${css}" />

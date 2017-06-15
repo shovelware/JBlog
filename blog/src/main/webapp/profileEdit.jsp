@@ -3,6 +3,6 @@
 
 <t:template title="Edit Profile">
 <jsp:body>
-	<t:profileEditForm/>
+	<t:profileEditForm profile="${profile}"/>
 </jsp:body>
 </t:template>

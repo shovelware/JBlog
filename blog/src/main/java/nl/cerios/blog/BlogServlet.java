@@ -236,7 +236,6 @@ public class BlogServlet extends HttpServlet{
 			request.setAttribute("post", cleanPost);
 			
 			postDB.UpdatePost(cleanPost);
-
 			getServletContext().getRequestDispatcher("/postView.jsp").forward(request, response);
 		}
 	}
@@ -250,8 +249,20 @@ public class BlogServlet extends HttpServlet{
 		}
 
 		else {
-				showLoggedInBlog(request, response);
-			}
+			int blogId = Integer.parseInt(request.getParameter("blogId"));
+			int profileId = Integer.parseInt(request.getParameter("profileId"));
+			String blogTitle = (String) request.getParameter("title");
+			String blogDescription = (String) request.getParameter("description");
+
+			BlogDTO blog = new BlogDTO(blogId, profileId, blogTitle, blogDescription);
+			BlogDTO cleanBlog = sanitize(blog);
+			
+			request.setAttribute("blog", cleanBlog);
+			
+			blogDB.UpdateBlog(cleanBlog);
+
+			getServletContext().getRequestDispatcher("/blog?id=" + blog.getId()).forward(request, response);
+		}
 	}
 	
     //[DB ACCESS PROFILE, BLOG]TODO
@@ -262,6 +273,16 @@ public class BlogServlet extends HttpServlet{
 		}
 
 		else {
+				int profileId = Integer.parseInt(request.getParameter("profileId"));
+				String profileName = (String) request.getParameter("name");
+				String profileMotto = (String) request.getParameter("motto");
+				LocalDateTime profileJoinDate = LocalDateTime.parse(request.getParameter("joinDate"));
+	
+				ProfileDTO profile = new ProfileDTO(profileId, profileName, profileMotto, profileJoinDate);
+				ProfileDTO cleanProfile = sanitize(profile);
+					
+				profileDB.UpdateProfile(cleanProfile);
+				
 				showLoggedInProfile(request, response);
 			}
 	}
@@ -362,6 +383,9 @@ public class BlogServlet extends HttpServlet{
 	protected void showEditProfileForm(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		if (checkLoggedIn(request.getSession())) {
+			int profileId = getLoggedInId(request.getSession());
+			ProfileDTO profile = profileDB.getProfileById(profileId);
+			request.setAttribute("profile", profile);
 			getServletContext().getRequestDispatcher("/profileEdit.jsp").forward(request, response);
 		}
 		
@@ -372,11 +396,14 @@ public class BlogServlet extends HttpServlet{
 	protected void showEditBlogForm(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		if (checkLoggedIn(request.getSession())) {
+			int profileId = getLoggedInId(request.getSession());
+			BlogDTO blog = blogDB.getBlogByProfileId(profileId).get(0);
+			request.setAttribute("blog", blog);
 			getServletContext().getRequestDispatcher("/blogEdit.jsp").forward(request, response);
 		}
 		
 		else{
-			showError404(request, response);
+			showError401(request, response);
 		}
 	}
 	

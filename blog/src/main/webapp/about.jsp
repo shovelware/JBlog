@@ -21,8 +21,6 @@
 	<tr><td>===</td></tr>
 	<tr><td>TODO: Add unit tests of all sorts</td></tr>
 	<tr><td>===</td></tr>
-	<tr><td>TODO: Improve ESAPI HTML validation (It leaves " around and &amp;lt; etc. behind)</td></tr>
-	<tr><td>===</td></tr>
 	<tr><td>TODO: Investigate removing the /blog/ suffix from everything (WebApp root?)</td></tr>
 	<tr><td>===</td></tr>
 	<tr><td>TODO: Finish implementing blog and profile editing</td></tr>

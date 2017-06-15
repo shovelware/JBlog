@@ -63,7 +63,8 @@ public class PostDAOSQL implements PostDAO {
 
 			statement = connection.prepareStatement(
 					"SELECT * FROM post" +
-					" WHERE blog_id=?"
+					" WHERE blog_id=?" +
+					" ORDER BY TIMESTAMP DESC"
 					);
 
 			statement.setInt(1, blogId);

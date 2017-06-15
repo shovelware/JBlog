@@ -123,9 +123,34 @@ public class ProfileDAOSQL implements ProfileDAO {
 
 	//Updating comes later
 	@Override
-	public boolean UpdateProfile(ProfileDTO updatedProfile) {
-		// TODO Auto-generated method stub
-		return false;
+	public boolean UpdateProfile(ProfileDTO updatedProfile) {		
+		Connection connection = null;
+	PreparedStatement statement = null;
+	boolean success = false;
+
+	try {
+		connection = ConnectionFactory.getInstance().getConnection();
+		statement = connection.prepareStatement(
+				"UPDATE profile " +
+				" SET motto = ?" + 
+				" WHERE id = ?"
+				);
+		
+		statement.setString(1, updatedProfile.getMotto());
+		statement.setInt(2, updatedProfile.getId());
+		
+		statement.executeUpdate();
+		
+		success = true;
+
+	} catch (SQLException e) {
+		throw new IllegalStateException(e);
+	}
+	
+	finally {
+		Close(connection, statement, null);
+	}
+	return success;
 	}
 
 	//Deleting comes later

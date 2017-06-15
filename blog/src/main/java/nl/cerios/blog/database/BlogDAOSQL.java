@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -153,8 +154,34 @@ public class BlogDAOSQL implements BlogDAO {
 	//Updating comes later
 	@Override
 	public boolean UpdateBlog(BlogDTO updatedBlog) {
-		// TODO Auto-generated method stub
-		return false;
+		Connection connection = null;
+		PreparedStatement statement = null;
+		boolean success = false;
+
+		try {
+			connection = ConnectionFactory.getInstance().getConnection();
+			statement = connection.prepareStatement(
+					"UPDATE blog " +
+					" SET title = ?, description = ?" + 
+					" WHERE id = ?"
+					);
+			
+			statement.setString(1, updatedBlog.getTitle());
+			statement.setString(2, updatedBlog.getDescription());
+			statement.setInt(3, updatedBlog.getId());
+			
+			statement.executeUpdate();
+			
+			success = true;
+
+		} catch (SQLException e) {
+			throw new IllegalStateException(e);
+		}
+		
+		finally {
+			Close(connection, statement, null);
+		}
+		return success;
 	}
 
 	//Deletion comes later

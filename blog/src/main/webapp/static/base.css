@@ -56,6 +56,19 @@ a {
     padding: 10px 5px;
 }
 
+.box.profile{
+	border-color: #832A0D #832A0D #832A0D #FF0000;
+}
+
+.box.blog {
+	border-color: #832A0D #832A0D #832A0D #00FF00;
+}
+
+.box.post {
+	border-color: #832A0D #832A0D #832A0D #0000FF;
+}
+
+
 .form {
     border-style: solid;
     border-width: medium;
