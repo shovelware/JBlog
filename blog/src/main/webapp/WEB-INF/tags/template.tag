@@ -5,15 +5,20 @@
 <%@ attribute name="title"%>
 <c:set var="title" value="${(empty title) ? 'Cerios Blogging' : title}" />
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!DOCTYPE html>
 <html>
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
-<c:url value="/favicon.ico" var="favicon" />
-<c:url value="/static/base.css" var="css" />
-<link rel="icon" type="image/x-icon" href="${favicon}"/>
-<link rel="stylesheet" href="${css}" />
-<title>${title}</title>
+	<meta charset="UTF-8">
+	<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	
+	<c:url value="/favicon.ico" var="favicon" />
+	<c:url value="/static/base.css" var="css" />
+	
+	<link rel="icon" type="image/x-icon" href="${favicon}"/>
+	<link rel="stylesheet" href="${css}" />
+	
+	<title>${title}</title>
 </head>
 <body>
 	<div id=top></div>

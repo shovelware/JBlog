@@ -24,4 +24,3 @@
 		<a href = "${pageContext.request.contextPath}/httperr.jsp"> err</a>
 	</div>
 </div>
-

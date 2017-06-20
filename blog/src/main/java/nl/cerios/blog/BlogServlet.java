@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import javax.servlet.RequestDispatcher;
@@ -120,7 +119,7 @@ public class BlogServlet extends HttpServlet{
     		case "/profile":		showProfileById(request, response);		break; //View profile?id=
     		
     		case "/blog/me":		showLoggedInBlog(request, response);	break; //View My Blog
-    		case "/profile/me":	showLoggedInProfile(request, response);	break; //View My Profile
+    		case "/profile/me":		showLoggedInProfile(request, response);	break; //View My Profile
     		
 			case "/post/new":		showNewPostForm(request, response);		break; //Write new post
     		case "/profile/new":	showNewProfileForm(request, response);  break; //Add new Profile
