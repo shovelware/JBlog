@@ -1,4 +1,4 @@
-package nl.cerios.blog;
+package nl.cerios.clog.ui;
 
 public class AppConfiguration {
 	private String url;

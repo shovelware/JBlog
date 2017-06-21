@@ -1,4 +1,4 @@
-package nl.cerios.blog;
+package nl.cerios.clog;
 
 import junit.framework.TestCase;
 //import nl.cerios.blog.database.PostHandler;

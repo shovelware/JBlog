@@ -1,5 +1,5 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
-<%@attribute name="post" required="true" type="nl.cerios.blog.database.PostDTO"%>
+<%@attribute name="post" required="true" type="nl.cerios.clog.database.PostDTO"%>
 <%@attribute name="profileId" required="true"%>
 
 <c:set var="title" value="${(empty post.title) ? '' : post.title}" />

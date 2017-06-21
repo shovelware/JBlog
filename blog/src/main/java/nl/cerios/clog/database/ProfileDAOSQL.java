@@ -1,4 +1,4 @@
-package nl.cerios.blog.database;
+package nl.cerios.clog.database;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;

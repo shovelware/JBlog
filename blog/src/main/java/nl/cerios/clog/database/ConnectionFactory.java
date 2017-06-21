@@ -1,10 +1,10 @@
-package nl.cerios.blog.database;
+package nl.cerios.clog.database;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-import nl.cerios.blog.AppConfiguration;
+import nl.cerios.clog.ui.AppConfiguration;
 
 public class ConnectionFactory {
 

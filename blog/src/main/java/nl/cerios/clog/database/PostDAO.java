@@ -1,4 +1,4 @@
-package nl.cerios.blog.database;
+package nl.cerios.clog.database;
 
 import java.time.LocalDateTime;
 import java.util.List;

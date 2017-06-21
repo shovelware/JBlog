@@ -1,4 +1,4 @@
-package nl.cerios.blog.database;
+package nl.cerios.clog.database;
 
 public final class BlogDTO {
 	private int id;

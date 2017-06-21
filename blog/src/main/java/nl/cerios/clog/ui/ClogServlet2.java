@@ -1,4 +1,4 @@
-package nl.cerios.blog;
+package nl.cerios.clog.ui;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -18,19 +18,19 @@ import javax.servlet.http.HttpSession;
 
 import org.yaml.snakeyaml.Yaml;
 
+import nl.cerios.clog.database.Authenticator;
+import nl.cerios.clog.database.BlogDAOSQL;
+import nl.cerios.clog.database.BlogDTO;
+import nl.cerios.clog.database.ConnectionFactory;
+import nl.cerios.clog.database.PostDAOSQL;
+import nl.cerios.clog.database.PostDTO;
+import nl.cerios.clog.database.ProfileDAOSQL;
+import nl.cerios.clog.database.ProfileDTO;
+
 import org.owasp.esapi.ESAPI;
 import org.owasp.esapi.errors.ValidationException;
 
-import nl.cerios.blog.database.Authenticator;
-import nl.cerios.blog.database.BlogDAOSQL;
-import nl.cerios.blog.database.BlogDTO;
-import nl.cerios.blog.database.ConnectionFactory;
-import nl.cerios.blog.database.PostDAOSQL;
-import nl.cerios.blog.database.PostDTO;
-import nl.cerios.blog.database.ProfileDAOSQL;
-import nl.cerios.blog.database.ProfileDTO;
-
-public class BlogServlet extends HttpServlet{
+public class ClogServlet2 extends HttpServlet{
 	private static final long serialVersionUID = -73186648007060644L;
 	
 	private PostDAOSQL postDB = new PostDAOSQL();
@@ -346,6 +346,7 @@ public class BlogServlet extends HttpServlet{
 			}
 	}
 	
+	////Edit forms [Prepopulate form with DTO content]
 	protected void showEditPostForm(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		if (checkLoggedIn(request.getSession())) {
@@ -421,7 +422,6 @@ public class BlogServlet extends HttpServlet{
 		getServletContext().getRequestDispatcher("/profileFind.jsp").forward(request, response);
 	}
 	
-    ////Edit forms [Prepopulate form with DTO content]
     
     //Generic pages
 	protected void showIndex(HttpServletRequest request, HttpServletResponse response)
@@ -672,7 +672,7 @@ public class BlogServlet extends HttpServlet{
     	else showError401(request, response);
     }
     
-    //Errors  
+    //Errors
     protected void showError401(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		getServletContext().getRequestDispatcher("/http401.jsp").forward(request, response);

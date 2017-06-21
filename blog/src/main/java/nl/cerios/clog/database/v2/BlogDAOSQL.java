@@ -1,4 +1,4 @@
-package nl.cerios.blog.database;
+package nl.cerios.clog.database.v2;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -31,23 +31,24 @@ public class BlogDAOSQL implements BlogDAO {
 			resultSet = statement.executeQuery();
 			blog = GetFromResultSet(resultSet);
 
-		} catch (SQLException e) {
+		} 
+		catch (SQLException e) {
 			throw new IllegalStateException(e);
 		}
-
 		finally{
 			Close(connection, statement, resultSet);
 		}
+		
 		return blog;
 	}
 
 	@Override
-	public List<BlogDTO> getBlogByProfileId(int profileId) {
+	public List<BlogDTO> getBlogsByProfileId(int profileId) {
 
 		Connection connection = null;
 		PreparedStatement statement = null;
 		ResultSet resultSet = null;
-		List<BlogDTO> blog = new ArrayList<BlogDTO>();
+		List<BlogDTO> blogs = new ArrayList<BlogDTO>();
 
 		try {
 			connection = ConnectionFactory.getInstance().getConnection();
@@ -61,7 +62,41 @@ public class BlogDAOSQL implements BlogDAO {
 
 			resultSet = statement.executeQuery();
 
-			blog = PopulateFromResultSet(resultSet);
+			blogs = PopulateFromResultSet(resultSet);
+		} 
+		catch (SQLException e) {
+			throw new IllegalStateException(e);
+		}
+		finally{
+			Close(connection, statement, resultSet);
+		}
+		return blogs;
+	}
+	
+	@Override
+	public List<Integer> getBlogIdsByProfileId(int profileId) {
+
+		Connection connection = null;
+		PreparedStatement statement = null;
+		ResultSet resultSet = null;
+		List<Integer>blogIds = new ArrayList<Integer>();
+
+		try {
+			connection = ConnectionFactory.getInstance().getConnection();
+
+			statement = connection.prepareStatement(
+					"SELECT id FROM blog" +
+					" WHERE profile_id=?"
+					);
+
+			statement.setInt(1, profileId);
+
+			resultSet = statement.executeQuery();
+			
+			while(resultSet.next())
+			{
+				blogIds.add(resultSet.getInt("id"));
+			}
 		} catch (SQLException e) {
 			throw new IllegalStateException(e);
 		}
@@ -70,17 +105,12 @@ public class BlogDAOSQL implements BlogDAO {
 		finally{
 			Close(connection, statement, resultSet);
 		}
-		return blog;
+		
+		return blogIds;		
 	}
 
-	//When we get to search we'll get to this
-	@Override
-	public List<BlogDTO> getBlogByTitle(String title) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	public int getProfileByBlogId(int id)
+	//???
+	public int getProfileIdByBlogId(int id)
 	{
 		int profileId = 0;
 		
@@ -104,11 +134,10 @@ public class BlogDAOSQL implements BlogDAO {
 			{
 				profileId = resultSet.getInt("profile_id");
 			}
-		} catch (SQLException e) {
+		} 
+		catch (SQLException e) {
 			throw new IllegalStateException(e);
 		}
-
-
 		finally{
 			Close(connection, statement, resultSet);
 		}
@@ -117,53 +146,54 @@ public class BlogDAOSQL implements BlogDAO {
 	}
 	
 	@Override
-	public boolean InsertBlog(BlogDTO newBlog) {
+	public int InsertBlog(BlogDTO newBlog) {
 		Connection connection = null;
 		PreparedStatement statement = null;
-		boolean success = false;
+		ResultSet resultSet = null;
+		int newBlogId = 0;
 
 		try {
 			connection = ConnectionFactory.getInstance().getConnection();
 			statement = connection.prepareStatement(
 					"INSERT INTO blog (id, profile_id, title, description)" +
-					" VALUES (?, ?, ?, ?);"
+					" VALUES (?, ?, ?, ?);", Statement.RETURN_GENERATED_KEYS
 					);
 			
 			statement.setInt(1, newBlog.getId());
 			statement.setInt(2, newBlog.getProfileId());
 			statement.setString(3, newBlog.getTitle());
 			statement.setString(4, newBlog.getDescription());
-
-			System.out.println(statement.toString());
 			
 			statement.executeUpdate();
 			
-			success = true;
-
-		} catch (SQLException e) {
+			resultSet = statement.getGeneratedKeys();
+			if (resultSet.next()) {
+			  newBlogId = resultSet.getInt(1);
+			}
+		}
+		catch (SQLException e) {
 			throw new IllegalStateException(e);
 		}
-
 		finally {
-			Close(connection, statement, null);
+			Close(connection, statement, resultSet);
 		}
 		
-		return success;
+		return newBlogId;
 	}
 
-	//Updating comes later
 	@Override
-	public boolean UpdateBlog(BlogDTO updatedBlog) {
+	public int UpdateBlog(BlogDTO updatedBlog) {
 		Connection connection = null;
 		PreparedStatement statement = null;
-		boolean success = false;
+		ResultSet resultSet = null;
+		int updatedBlogId = 0;
 
 		try {
 			connection = ConnectionFactory.getInstance().getConnection();
 			statement = connection.prepareStatement(
 					"UPDATE blog " +
 					" SET title = ?, description = ?" + 
-					" WHERE id = ?"
+					" WHERE id = ?", Statement.RETURN_GENERATED_KEYS
 					);
 			
 			statement.setString(1, updatedBlog.getTitle());
@@ -171,31 +201,55 @@ public class BlogDAOSQL implements BlogDAO {
 			statement.setInt(3, updatedBlog.getId());
 			
 			statement.executeUpdate();
-			
-			success = true;
 
-		} catch (SQLException e) {
+			resultSet = statement.getGeneratedKeys();
+			if (resultSet.next()) {
+			  updatedBlogId = resultSet.getInt(1);
+			}
+		}
+		catch (SQLException e) {
 			throw new IllegalStateException(e);
 		}
+		finally {
+			Close(connection, statement, resultSet);
+		}
 		
+		return updatedBlogId;
+	}
+
+	@Override
+	public boolean DeleteBlog(int blogId) {
+		Connection connection = null;
+		PreparedStatement statement = null;
+		boolean success = false;
+		
+		try {
+			connection = ConnectionFactory.getInstance().getConnection();
+			statement = connection.prepareStatement(
+					"DELETE FROM blog " +
+					" WHERE id = ?"
+					);
+			
+			statement.setInt(1, blogId);
+			
+			statement.execute();
+			success = true;
+
+		}
+		catch (SQLException e) {
+			throw new IllegalStateException(e);
+		}
 		finally {
 			Close(connection, statement, null);
 		}
+		
 		return success;
 	}
 
-	//Deletion comes later
-	@Override
-	public boolean DeleteBlog(int blogId) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-	
 	private BlogDTO GetFromResultSet(ResultSet resultSet) {
 		
 		BlogDTO blog = null;
 		
-		//Convert each resultSet row to a PostDTO
 		try {
 			while (resultSet.next()) {
 				blog = new BlogDTO(
@@ -204,7 +258,8 @@ public class BlogDAOSQL implements BlogDAO {
 						resultSet.getString("title"),
 						resultSet.getString("description"));
 			}
-		} catch (SQLException e) {
+		}
+		catch (SQLException e) {
 			throw new IllegalStateException(e);
 		}
 		
@@ -215,7 +270,6 @@ public class BlogDAOSQL implements BlogDAO {
 		
 		List<BlogDTO> blogs = new ArrayList<BlogDTO>();
 		
-		//Convert each resultSet row to a PostDTO
 		try {
 			while (resultSet.next()) {
 				BlogDTO b = new BlogDTO(
@@ -226,7 +280,8 @@ public class BlogDAOSQL implements BlogDAO {
 
 				blogs.add(b);
 			}
-		} catch (SQLException e) {
+		}
+		catch (SQLException e) {
 			throw new IllegalStateException(e);
 		}
 		
@@ -234,9 +289,8 @@ public class BlogDAOSQL implements BlogDAO {
 	}
 
 	private void Close(Connection connection, PreparedStatement statement, ResultSet resultSet) {
-		try { if (resultSet != null) resultSet.close(); } catch (Exception e) {};
-		try { if (statement != null) statement.close(); } catch (Exception e) {};
-		try { if (connection != null) connection.close(); } catch (Exception e) {};
+		try { if (resultSet != null) resultSet.close(); } catch (SQLException e) { e.printStackTrace(); };
+		try { if (statement != null) statement.close(); } catch (SQLException e) { e.printStackTrace(); };
+		try { if (connection != null) connection.close(); } catch (SQLException e) { e.printStackTrace(); };
 	}
-
 }
