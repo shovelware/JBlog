@@ -10,7 +10,7 @@ interface PostDAO {
 
 	List<PostDTO> getPostsSinceTimestamp(LocalDateTime since, int count);
 	
-	int InsertPost(PostDTO newPost);
-	int UpdatePost(PostDTO updatedPost);	
-	boolean DeletePost(int postId);
+	int insertPost(PostDTO newPost);
+	int updatePost(PostDTO updatedPost);	
+	boolean deletePost(int postId);
 }

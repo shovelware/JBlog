@@ -32,7 +32,8 @@ public class ProfileDAOSQL implements ProfileDAO {
 			resultSet = statement.executeQuery();
 
 			profile = GetFromResultSet(resultSet);
-		} catch (SQLException e) {
+		}
+		catch (SQLException e) {
 			throw new IllegalStateException(e);
 		}
 		
@@ -43,7 +44,7 @@ public class ProfileDAOSQL implements ProfileDAO {
 	}
 
 	@Override
-	public int InsertProfile(ProfileDTO newProfile) {
+	public int insertProfile(ProfileDTO newProfile) {
 		Connection connection = null;
 		PreparedStatement statement = null;
 		ResultSet resultSet = null;
@@ -76,7 +77,7 @@ public class ProfileDAOSQL implements ProfileDAO {
 	}
 
 	@Override
-	public int UpdateProfile(ProfileDTO updatedProfile) {
+	public int updateProfile(ProfileDTO updatedProfile) {
 		Connection connection = null;
 		PreparedStatement statement = null;
 		ResultSet resultSet = null;
@@ -110,7 +111,7 @@ public class ProfileDAOSQL implements ProfileDAO {
 	}
 
 	@Override
-	public boolean DeleteProfile(int profileId) {
+	public boolean deleteProfile(int profileId) {
 		Connection connection = null;
 		PreparedStatement statement = null;
 		boolean success = false;

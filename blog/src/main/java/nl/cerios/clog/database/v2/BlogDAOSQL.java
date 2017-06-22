@@ -97,7 +97,8 @@ public class BlogDAOSQL implements BlogDAO {
 			{
 				blogIds.add(resultSet.getInt("id"));
 			}
-		} catch (SQLException e) {
+		}
+		catch (SQLException e) {
 			throw new IllegalStateException(e);
 		}
 
@@ -109,7 +110,6 @@ public class BlogDAOSQL implements BlogDAO {
 		return blogIds;		
 	}
 
-	//???
 	public int getProfileIdByBlogId(int id)
 	{
 		int profileId = 0;
@@ -146,7 +146,7 @@ public class BlogDAOSQL implements BlogDAO {
 	}
 	
 	@Override
-	public int InsertBlog(BlogDTO newBlog) {
+	public int insertBlog(BlogDTO newBlog) {
 		Connection connection = null;
 		PreparedStatement statement = null;
 		ResultSet resultSet = null;
@@ -182,7 +182,7 @@ public class BlogDAOSQL implements BlogDAO {
 	}
 
 	@Override
-	public int UpdateBlog(BlogDTO updatedBlog) {
+	public int updateBlog(BlogDTO updatedBlog) {
 		Connection connection = null;
 		PreparedStatement statement = null;
 		ResultSet resultSet = null;
@@ -218,7 +218,7 @@ public class BlogDAOSQL implements BlogDAO {
 	}
 
 	@Override
-	public boolean DeleteBlog(int blogId) {
+	public boolean deleteBlog(int blogId) {
 		Connection connection = null;
 		PreparedStatement statement = null;
 		boolean success = false;

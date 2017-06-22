@@ -16,30 +16,20 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import org.yaml.snakeyaml.Yaml;
+import nl.cerios.clog.business.ClogLogic;
+import nl.cerios.clog.domain.BlogDO;
+import nl.cerios.clog.domain.PostDO;
+import nl.cerios.clog.domain.ProfileDO;
 
-import nl.cerios.clog.database.Authenticator;
-import nl.cerios.clog.database.BlogDAOSQL;
-import nl.cerios.clog.database.BlogDTO;
-import nl.cerios.clog.database.ConnectionFactory;
-import nl.cerios.clog.database.PostDAOSQL;
-import nl.cerios.clog.database.PostDTO;
-import nl.cerios.clog.database.ProfileDAOSQL;
-import nl.cerios.clog.database.ProfileDTO;
+import org.yaml.snakeyaml.Yaml;
 
 import org.owasp.esapi.ESAPI;
 import org.owasp.esapi.errors.ValidationException;
 
 public class ClogServlet2 extends HttpServlet{
-	private static final long serialVersionUID = -73186648007060644L;
+	private static final long serialVersionUID = 1434964914372365428L;
 	
-	private PostDAOSQL postDB = new PostDAOSQL();
-	private ProfileDAOSQL profileDB = new ProfileDAOSQL();
-	private BlogDAOSQL blogDB = new BlogDAOSQL();
-	
-	private Authenticator authenticator = new Authenticator();
-	
-	private int postCount = 5;
+	private ClogLogic business;
 	
 	public void init(ServletConfig config)
 			   throws ServletException {
@@ -47,19 +37,15 @@ public class ClogServlet2 extends HttpServlet{
 		
 		try {
 			Yaml yaml = new Yaml();
-			
-				File yamlConfig = new File(getServletContext().getRealPath("/config.yml"));
-				InputStream input = new FileInputStream(yamlConfig);
+			File yamlConfig = new File(getServletContext().getRealPath("/config.yml"));
+			InputStream input = new FileInputStream(yamlConfig);				
+			AppConfiguration appConfig = yaml.loadAs(input,  AppConfiguration.class);
+			input.close();
 				
-				AppConfiguration appConfig = yaml.loadAs(input,  AppConfiguration.class);
-
-				postCount = appConfig.getPostsToRetrieve();
-				input.close();
-			
-			ConnectionFactory.getInstance().init(appConfig);
+			business.init(appConfig);
 		}
 		catch(Exception e){
-			System.err.println("Servlet init: " + e);
+			System.err.println("Servlet initialization error");
 		}
 	}
 	
@@ -93,7 +79,6 @@ public class ClogServlet2 extends HttpServlet{
 			}
 
 		}
-
 		catch (ServletException e) {
 			System.err.println("Servlet POST " + e);
 			request.setAttribute("errordetails", e.getMessage());
@@ -164,10 +149,9 @@ public class ClogServlet2 extends HttpServlet{
 			String ptitle = (String) request.getParameter("title");
 			String ptext = (String) request.getParameter("text");
 
-			PostDTO post = new PostDTO(0, blogId, LocalDateTime.now(), ptitle, ptext);
-			PostDTO cleanPost = sanitize(post);
+			PostDO post = new PostDO(0, blogId, LocalDateTime.now(), ptitle, ptext);
 			
-			postDB.InsertPost(cleanPost);
+			postDB.insertPost(cleanPost);
 			showLoggedInBlog(request, response);
 		}
 
@@ -197,7 +181,7 @@ public class ClogServlet2 extends HttpServlet{
 			ProfileDTO profile = new ProfileDTO(0, username, motto, LocalDateTime.now());
 			ProfileDTO cleanProfile = sanitize(profile);
 
-			profileDB.InsertProfile(cleanProfile);
+			profileDB.insertProfile(cleanProfile);
 			authenticator.InsertPassword(username, password);
 
 			int profileId = authenticator.GetIdByName(username);
@@ -205,7 +189,7 @@ public class ClogServlet2 extends HttpServlet{
 			BlogDTO newBlog = new BlogDTO(0, profileId, "Blog " + username, username + "'s blog");
 			BlogDTO cleanBlog = sanitize(newBlog);
 			
-			blogDB.InsertBlog(cleanBlog);
+			blogDB.insertBlog(cleanBlog);
 			
 			boolean authenticated = authenticator.AuthenticateUser(username, password);
 
@@ -234,7 +218,7 @@ public class ClogServlet2 extends HttpServlet{
 			
 			request.setAttribute("post", cleanPost);
 			
-			postDB.UpdatePost(cleanPost);
+			postDB.updatePost(cleanPost);
 			getServletContext().getRequestDispatcher("/postView.jsp").forward(request, response);
 		}
 	}
@@ -258,7 +242,7 @@ public class ClogServlet2 extends HttpServlet{
 			
 			request.setAttribute("blog", cleanBlog);
 			
-			blogDB.UpdateBlog(cleanBlog);
+			blogDB.updateBlog(cleanBlog);
 
 			getServletContext().getRequestDispatcher("/blog?id=" + blog.getId()).forward(request, response);
 		}
@@ -280,7 +264,7 @@ public class ClogServlet2 extends HttpServlet{
 				ProfileDTO profile = new ProfileDTO(profileId, profileName, profileMotto, profileJoinDate);
 				ProfileDTO cleanProfile = sanitize(profile);
 					
-				profileDB.UpdateProfile(cleanProfile);
+				profileDB.updateProfile(cleanProfile);
 				
 				showLoggedInProfile(request, response);
 			}
@@ -706,6 +690,7 @@ public class ClogServlet2 extends HttpServlet{
     	{
     		id = (int)potentialId;
     	}
+    	
     	return id;
     }
 
@@ -733,89 +718,5 @@ public class ClogServlet2 extends HttpServlet{
     	}
     	
     	return admin;
-    }
-
-    
-    protected ProfileDTO sanitize(ProfileDTO profile)
-    {
-    	ProfileDTO cleanProfile;
-    	
-    	String name = profile.getName();
-    	String motto = profile.getMotto();
-    	
-    	String cleanName = "Name";
-    	String cleanMotto = "Motto";
-    	
-    	try
-    	{
-    		cleanName = ESAPI.validator().getValidSafeHTML("profileName", name, 16, true);
-    		cleanMotto = ESAPI.validator().getValidSafeHTML("profileMotto", motto, 32, true);
-    	} 	
-    	catch (ValidationException e) { System.err.println("Error validating Profile"); }
-    	
-    	cleanProfile = new ProfileDTO(profile.getId(), cleanName, cleanMotto, profile.getJoinDate());
-    	
-    	return cleanProfile;
-    }
-    
-    
-    protected BlogDTO sanitize(BlogDTO blog)
-    {
-    	BlogDTO cleanBlog;
-    	
-    	String title = blog.getTitle();
-    	String description = blog.getDescription();
-    	
-    	String cleanTitle = "Title";
-    	String cleanDescription = "Description";
-
-    	try
-    	{
-    		cleanTitle = ESAPI.validator().getValidSafeHTML("blogTitle", title, 48, true);
-    		cleanDescription = ESAPI.validator().getValidSafeHTML("blogDescription", description, 32000, true);
-    	} 	
-    	catch (ValidationException e) { System.err.println("Error validating Blog"); }
-    	
-    	cleanBlog = new BlogDTO(blog.getId(), blog.getProfileId(), cleanTitle, cleanDescription);
-    	
-    	return cleanBlog;
-    }
-    
-    
-    protected PostDTO sanitize(PostDTO post)
-    {
-    	PostDTO cleanPost;
-    	
-    	String title = post.getTitle();
-    	String text = post.getText();
-    	
-    	
-    	String cleanTitle = "Title";
-    	String cleanText = "Text";
-    	
-    	try
-    	{
-    		cleanTitle = ESAPI.validator().getValidSafeHTML("postTitle", title, 48, true);
-    		cleanText = ESAPI.validator().getValidSafeHTML("postText", text, 64000, true);
-    	} 	
-    	catch (ValidationException e) { System.err.println("Error validating Post"); }
-    	
-    	cleanPost = new PostDTO(post.getId(), post.getBlogId(), post.getTimestamp(), cleanTitle, cleanText);
-    	
-    	return cleanPost;
-    }
-    
-
-    protected List<PostDTO> sanitize(List<PostDTO> postList)
-    {
-    	List<PostDTO> cleanList = new ArrayList<PostDTO>();
-    	
-    	for (PostDTO p : postList)
-    	{
-    		PostDTO cleanPost = sanitize(p);
-    		cleanList.add(cleanPost);
-    	}
-    	
-    	return cleanList;
     }
 }

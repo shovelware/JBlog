@@ -17,5 +17,4 @@ public final class BlogDTO {
 	public int getProfileId() { return profileId; }
 	public String getTitle() { return title; }
 	public String getDescription() { return description; }
-	
 }

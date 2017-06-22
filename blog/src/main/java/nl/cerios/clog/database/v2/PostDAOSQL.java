@@ -64,7 +64,8 @@ public class PostDAOSQL implements PostDAO {
 			resultSet = statement.executeQuery();
 			
 			posts = PopulateFromResultSet(resultSet);
-		} catch (SQLException e) {
+		}
+		catch (SQLException e) {
 			throw new IllegalStateException(e);
 		}
 		finally {
@@ -86,17 +87,18 @@ public class PostDAOSQL implements PostDAO {
 
 			statement = connection.prepareStatement(
 					"SELECT * FROM post" +
-					"WHERE timestamp >= ?" +
+					" WHERE timestamp >= ?" +
 					" ORDER BY timestamp DESC" +
 					" LIMIT ?"
 					);
 
 			statement.setTimestamp(1, Timestamp.valueOf(since));
-			statement.setInt(1, count);
+			statement.setInt(2, count);
 			resultSet = statement.executeQuery();
 
 			posts = PopulateFromResultSet(resultSet);
-		} catch (SQLException e) {
+		}
+		catch (SQLException e) {
 			throw new IllegalStateException(e);
 		}
 		finally {
@@ -106,8 +108,38 @@ public class PostDAOSQL implements PostDAO {
 		return posts;
 	}
 
+	public List<PostDTO> getPostsRecent(int count) {
+		Connection connection = null;
+		PreparedStatement statement = null;
+		ResultSet resultSet = null;
+		List<PostDTO> posts = new ArrayList<PostDTO>();
+
+		try {
+			connection = ConnectionFactory.getInstance().getConnection();
+
+			statement = connection.prepareStatement(
+					"SELECT * FROM post" +
+					" ORDER BY timestamp DESC" +
+					" LIMIT ?"
+					);
+
+			statement.setInt(1, count);
+			resultSet = statement.executeQuery();
+
+			posts = PopulateFromResultSet(resultSet);
+		}
+		catch (SQLException e) {
+			throw new IllegalStateException(e);
+		}
+		finally {
+			Close(connection, statement, resultSet);			
+		}
+		
+		return posts;
+	}
+	
 	@Override
-	public int InsertPost(PostDTO newPost) {
+	public int insertPost(PostDTO newPost) {
 		Connection connection = null;
 		PreparedStatement statement = null;
 		ResultSet resultSet = null;
@@ -141,7 +173,7 @@ public class PostDAOSQL implements PostDAO {
 	}
 
 	@Override
-	public int UpdatePost(PostDTO updatedPost) {
+	public int updatePost(PostDTO updatedPost) {
 		Connection connection = null;
 		PreparedStatement statement = null;
 		ResultSet resultSet = null;
@@ -177,7 +209,7 @@ public class PostDAOSQL implements PostDAO {
 	}
 
 	@Override
-	public boolean DeletePost(int postId) {
+	public boolean deletePost(int postId) {
 		Connection connection = null;
 		PreparedStatement statement = null;
 		boolean success = false;

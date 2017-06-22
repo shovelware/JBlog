@@ -8,7 +8,7 @@ public interface BlogDAO {
 	List<BlogDTO> getBlogsByProfileId(int profileId);
 	List<Integer> getBlogIdsByProfileId(int profileId);
 	
-	int InsertBlog(BlogDTO newBlog);
-	int UpdateBlog(BlogDTO updatedBlog);	
-	boolean DeleteBlog(int blogId);
+	int insertBlog(BlogDTO newBlog);
+	int updateBlog(BlogDTO updatedBlog);	
+	boolean deleteBlog(int blogId);
 }
