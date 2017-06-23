@@ -4,7 +4,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,7 +12,8 @@ import com.mysql.jdbc.Statement;
 public class ProfileDAOSQL implements ProfileDAO {
 
 	@Override
-	public ProfileDTO getProfileById(int profileId) {
+	public ProfileDTO getProfileById(int profileId)
+			throws SQLException {
 		Connection connection = null;
 		PreparedStatement statement = null;
 		ResultSet resultSet = null;
@@ -32,19 +32,17 @@ public class ProfileDAOSQL implements ProfileDAO {
 			resultSet = statement.executeQuery();
 
 			profile = GetFromResultSet(resultSet);
-		}
-		catch (SQLException e) {
-			throw new IllegalStateException(e);
-		}
-		
+		}		
 		finally { 
 			Close(connection, statement, resultSet); 
-			}
+		}
+		
 		return profile;
 	}
 
 	@Override
-	public int insertProfile(ProfileDTO newProfile) {
+	public int insertProfile(ProfileDTO newProfile)
+			throws SQLException {
 		Connection connection = null;
 		PreparedStatement statement = null;
 		ResultSet resultSet = null;
@@ -67,17 +65,16 @@ public class ProfileDAOSQL implements ProfileDAO {
 			  newProfileId = resultSet.getInt(1);
 			}
 		}
-		catch (SQLException e) {
-			throw new IllegalStateException(e);
-		}
 		finally {
 			Close(connection, statement, null);
 		}
+		
 		return newProfileId;
 	}
 
 	@Override
-	public int updateProfile(ProfileDTO updatedProfile) {
+	public int updateProfile(ProfileDTO updatedProfile)
+			throws SQLException {
 		Connection connection = null;
 		PreparedStatement statement = null;
 		ResultSet resultSet = null;
@@ -101,17 +98,16 @@ public class ProfileDAOSQL implements ProfileDAO {
 			  updatedProfileId = resultSet.getInt(1);
 			}
 		}
-		catch (SQLException e) {
-			throw new IllegalStateException(e);
-		}
 		finally {
 			Close(connection, statement, null);
 		}
+		
 		return updatedProfileId;
 	}
 
 	@Override
-	public boolean deleteProfile(int profileId) {
+	public boolean deleteProfile(int profileId)
+			throws SQLException {
 		Connection connection = null;
 		PreparedStatement statement = null;
 		boolean success = false;
@@ -129,9 +125,6 @@ public class ProfileDAOSQL implements ProfileDAO {
 			success = true;
 
 		}
-		catch (SQLException e) {
-			throw new IllegalStateException(e);
-		}
 		finally {
 			Close(connection, statement, null);
 		}
@@ -139,49 +132,42 @@ public class ProfileDAOSQL implements ProfileDAO {
 		return success;
 	}
 	
-	private List<ProfileDTO> PopulateFromResultSet(ResultSet resultSet) {
+	private List<ProfileDTO> PopulateFromResultSet(ResultSet resultSet)
+			throws SQLException {
 		List<ProfileDTO> profiles = new ArrayList<ProfileDTO>();
 		
-		try {
-			while (resultSet.next()) {
-				ProfileDTO p = new ProfileDTO(
-						resultSet.getInt("id"),
-						resultSet.getString("name"),
-						resultSet.getString("motto"),
-						resultSet.getTimestamp("joindate").toLocalDateTime());
+		while (resultSet.next()) {
+			ProfileDTO p = new ProfileDTO(
+					resultSet.getInt("id"),
+					resultSet.getString("name"),
+					resultSet.getString("motto"),
+					resultSet.getTimestamp("joindate").toLocalDateTime());
 
-				profiles.add(p);
-			}
-		}
-		catch (SQLException e) {
-			throw new IllegalStateException(e);
+			profiles.add(p);
 		}
 		
 		return profiles;
 	}
 
-	private ProfileDTO GetFromResultSet(ResultSet resultSet) {
+	private ProfileDTO GetFromResultSet(ResultSet resultSet)
+			throws SQLException {
 		ProfileDTO profile = null;
 		
-		try {
-			while (resultSet.next()) {
-				profile = new ProfileDTO(
-						resultSet.getInt("id"),
-						resultSet.getString("name"),
-						resultSet.getString("motto"),
-						resultSet.getTimestamp("joindate").toLocalDateTime());
-			}
-		}
-		catch (SQLException e) {
-			throw new IllegalStateException(e);
+		while (resultSet.next()) {
+			profile = new ProfileDTO(
+					resultSet.getInt("id"),
+					resultSet.getString("name"),
+					resultSet.getString("motto"),
+					resultSet.getTimestamp("joindate").toLocalDateTime());
 		}
 		
 		return profile;
 	}
 
-	private void Close(Connection connection, PreparedStatement statement, ResultSet resultSet) {
-		try { if (resultSet != null) resultSet.close(); } catch (SQLException e) { e.printStackTrace(); };
-		try { if (statement != null) statement.close(); } catch (SQLException e) { e.printStackTrace(); };
-		try { if (connection != null) connection.close(); } catch (SQLException e) { e.printStackTrace(); };
+	private void Close(Connection connection, PreparedStatement statement, ResultSet resultSet)
+			throws SQLException {
+		if (resultSet != null) { resultSet.close(); }
+		if (statement != null) { statement.close(); }
+		if (connection != null) { connection.close(); }
 	}
 }

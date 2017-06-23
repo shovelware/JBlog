@@ -16,6 +16,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import nl.cerios.clog.business.AppConfiguration;
 import nl.cerios.clog.business.ClogLogic;
 import nl.cerios.clog.domain.BlogDO;
 import nl.cerios.clog.domain.PostDO;

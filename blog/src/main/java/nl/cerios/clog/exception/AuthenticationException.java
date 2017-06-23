@@ -1,7 +1,7 @@
 package nl.cerios.clog.exception;
 
 public class AuthenticationException extends Exception {
-	private static final long serialVersionUID = -967099686662943579L;
+	private static final long serialVersionUID = 7130775267957070725L;
 
 	public AuthenticationException(String message) {
 		super(message);

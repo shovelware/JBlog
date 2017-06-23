@@ -10,10 +10,12 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+
 public class PostDAOSQL implements PostDAO {
 
 	@Override
-	public PostDTO getPostById(int postId) {
+	public PostDTO getPostById(int postId)
+		throws SQLException {
 		Connection connection = null;
 		PreparedStatement statement = null;
 		ResultSet resultSet = null;
@@ -32,9 +34,6 @@ public class PostDAOSQL implements PostDAO {
 			
 			post = GetFromResultSet(resultSet);
 		}
-		catch (SQLException e) {
-			throw new IllegalStateException(e);
-		} 
 		finally {
 			Close(connection, statement, resultSet);
 		}
@@ -43,7 +42,8 @@ public class PostDAOSQL implements PostDAO {
 	}
 
 	@Override
-	public List<PostDTO> getPostsByBlogId(int blogId, int count) {
+	public List<PostDTO> getPostsByBlogId(int blogId, int count)
+			throws SQLException {
 		Connection connection = null;
 		PreparedStatement statement = null;
 		ResultSet resultSet = null;
@@ -65,9 +65,6 @@ public class PostDAOSQL implements PostDAO {
 			
 			posts = PopulateFromResultSet(resultSet);
 		}
-		catch (SQLException e) {
-			throw new IllegalStateException(e);
-		}
 		finally {
 			Close(connection, statement, resultSet);
 		}
@@ -76,7 +73,8 @@ public class PostDAOSQL implements PostDAO {
 	}
 
 	@Override
-	public List<PostDTO> getPostsSinceTimestamp(LocalDateTime since, int count) {
+	public List<PostDTO> getPostsSinceTimestamp(LocalDateTime since, int count)
+			throws SQLException {
 		Connection connection = null;
 		PreparedStatement statement = null;
 		ResultSet resultSet = null;
@@ -98,9 +96,6 @@ public class PostDAOSQL implements PostDAO {
 
 			posts = PopulateFromResultSet(resultSet);
 		}
-		catch (SQLException e) {
-			throw new IllegalStateException(e);
-		}
 		finally {
 			Close(connection, statement, resultSet);			
 		}
@@ -108,7 +103,8 @@ public class PostDAOSQL implements PostDAO {
 		return posts;
 	}
 
-	public List<PostDTO> getPostsRecent(int count) {
+	public List<PostDTO> getPostsRecent(int count)
+			throws SQLException {
 		Connection connection = null;
 		PreparedStatement statement = null;
 		ResultSet resultSet = null;
@@ -128,9 +124,6 @@ public class PostDAOSQL implements PostDAO {
 
 			posts = PopulateFromResultSet(resultSet);
 		}
-		catch (SQLException e) {
-			throw new IllegalStateException(e);
-		}
 		finally {
 			Close(connection, statement, resultSet);			
 		}
@@ -139,7 +132,8 @@ public class PostDAOSQL implements PostDAO {
 	}
 	
 	@Override
-	public int insertPost(PostDTO newPost) {
+	public int insertPost(PostDTO newPost)
+			throws SQLException {
 		Connection connection = null;
 		PreparedStatement statement = null;
 		ResultSet resultSet = null;
@@ -161,9 +155,6 @@ public class PostDAOSQL implements PostDAO {
 			if (resultSet.next()) {
 			  newPostId = resultSet.getInt(1);
 			}
-		} 
-		catch (SQLException e) {
-			throw new IllegalStateException(e);
 		}
 		finally {
 			Close(connection, statement, resultSet);
@@ -173,7 +164,8 @@ public class PostDAOSQL implements PostDAO {
 	}
 
 	@Override
-	public int updatePost(PostDTO updatedPost) {
+	public int updatePost(PostDTO updatedPost)
+			throws SQLException {
 		Connection connection = null;
 		PreparedStatement statement = null;
 		ResultSet resultSet = null;
@@ -198,9 +190,6 @@ public class PostDAOSQL implements PostDAO {
 			  updatedPostId = resultSet.getInt(1);
 			}
 		}
-		catch (SQLException e) {
-			throw new IllegalStateException(e);
-		}
 		finally {
 			Close(connection, statement, resultSet);
 		}
@@ -209,7 +198,8 @@ public class PostDAOSQL implements PostDAO {
 	}
 
 	@Override
-	public boolean deletePost(int postId) {
+	public boolean deletePost(int postId)
+			throws SQLException {
 		Connection connection = null;
 		PreparedStatement statement = null;
 		boolean success = false;
@@ -227,9 +217,6 @@ public class PostDAOSQL implements PostDAO {
 			success = true;
 
 		}
-		catch (SQLException e) {
-			throw new IllegalStateException(e);
-		}
 		finally {
 			Close(connection, statement, null);
 		}
@@ -238,53 +225,46 @@ public class PostDAOSQL implements PostDAO {
 	}
 	
 	private PostDTO GetFromResultSet(ResultSet resultSet)
-	{
+			throws SQLException	{
 		PostDTO post = null;
 		
-		try {
-			if (resultSet.next()) {
-				post = new PostDTO(
-						resultSet.getInt("id"),
-						resultSet.getInt("blog_id"),
-						resultSet.getTimestamp("timestamp").toLocalDateTime(),
-						resultSet.getString("title"),
-						resultSet.getString("text"));
-			}
-		} 
-		catch (SQLException e) {
-			throw new IllegalStateException(e);
+		if (resultSet.next()) {
+			post = new PostDTO(
+				resultSet.getInt("id"),
+				resultSet.getInt("blog_id"),
+				resultSet.getTimestamp("timestamp").toLocalDateTime(),
+				resultSet.getString("title"),
+				resultSet.getString("text"));
 		}
 		
 		return post;
 	}
 	
-	private List<PostDTO> PopulateFromResultSet(ResultSet resultSet) {
+	private List<PostDTO> PopulateFromResultSet(ResultSet resultSet)
+			throws SQLException {
 		
 		List<PostDTO> posts = new ArrayList<PostDTO>();
 		
-		//Convert each resultSet row to a PostDTO
-		try {
-			while (resultSet.next()) {
-				PostDTO p = new PostDTO(
-						resultSet.getInt("id"),
-						resultSet.getInt("blog_id"),
-						resultSet.getTimestamp("timestamp").toLocalDateTime(),
-						resultSet.getString("title"),
-						resultSet.getString("text"));
-
-				posts.add(p);
-			}
-		}
-		catch (SQLException e) {
-			throw new IllegalStateException(e);
-		}
 		
+		//Convert each resultSet row to a PostDTO
+		while (resultSet.next()) {
+			PostDTO p = new PostDTO(
+				resultSet.getInt("id"),
+				resultSet.getInt("blog_id"),
+				resultSet.getTimestamp("timestamp").toLocalDateTime(),
+				resultSet.getString("title"),
+				resultSet.getString("text"));
+			posts.add(p);
+		}
+			
 		return posts;
 	}
 
-	private void Close(Connection connection, PreparedStatement statement, ResultSet resultSet) {
-		try { if (resultSet != null) resultSet.close(); } catch (SQLException e) { e.printStackTrace(); };
-		try { if (statement != null) statement.close(); } catch (SQLException e) { e.printStackTrace(); };
-		try { if (connection != null) connection.close(); } catch (SQLException e) { e.printStackTrace(); };
+	private void Close(Connection connection, PreparedStatement statement, ResultSet resultSet)
+			throws SQLException {
+		if (resultSet != null) { resultSet.close(); }
+		if (statement != null) { statement.close(); }
+		if (connection != null) { connection.close(); }
 	}
 }
+

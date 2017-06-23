@@ -18,6 +18,7 @@ import javax.servlet.http.HttpSession;
 
 import org.yaml.snakeyaml.Yaml;
 
+import nl.cerios.clog.business.AppConfiguration;
 import nl.cerios.clog.database.Authenticator;
 import nl.cerios.clog.database.BlogDAOSQL;
 import nl.cerios.clog.database.BlogDTO;

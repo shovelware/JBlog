@@ -11,8 +11,8 @@ import java.util.List;
 public class BlogDAOSQL implements BlogDAO {
 
 	@Override
-	public BlogDTO getBlogById(int blogId) {
-
+	public BlogDTO getBlogById(int blogId)
+			throws SQLException {
 		Connection connection = null;
 		PreparedStatement statement = null;
 		ResultSet resultSet = null;
@@ -31,9 +31,6 @@ public class BlogDAOSQL implements BlogDAO {
 			resultSet = statement.executeQuery();
 			blog = GetFromResultSet(resultSet);
 
-		} 
-		catch (SQLException e) {
-			throw new IllegalStateException(e);
 		}
 		finally{
 			Close(connection, statement, resultSet);
@@ -43,8 +40,8 @@ public class BlogDAOSQL implements BlogDAO {
 	}
 
 	@Override
-	public List<BlogDTO> getBlogsByProfileId(int profileId) {
-
+	public List<BlogDTO> getBlogsByProfileId(int profileId)
+			throws SQLException {
 		Connection connection = null;
 		PreparedStatement statement = null;
 		ResultSet resultSet = null;
@@ -63,9 +60,6 @@ public class BlogDAOSQL implements BlogDAO {
 			resultSet = statement.executeQuery();
 
 			blogs = PopulateFromResultSet(resultSet);
-		} 
-		catch (SQLException e) {
-			throw new IllegalStateException(e);
 		}
 		finally{
 			Close(connection, statement, resultSet);
@@ -74,8 +68,8 @@ public class BlogDAOSQL implements BlogDAO {
 	}
 	
 	@Override
-	public List<Integer> getBlogIdsByProfileId(int profileId) {
-
+	public List<Integer> getBlogIdsByProfileId(int profileId)
+			throws SQLException {
 		Connection connection = null;
 		PreparedStatement statement = null;
 		ResultSet resultSet = null;
@@ -98,11 +92,6 @@ public class BlogDAOSQL implements BlogDAO {
 				blogIds.add(resultSet.getInt("id"));
 			}
 		}
-		catch (SQLException e) {
-			throw new IllegalStateException(e);
-		}
-
-
 		finally{
 			Close(connection, statement, resultSet);
 		}
@@ -111,13 +100,12 @@ public class BlogDAOSQL implements BlogDAO {
 	}
 
 	public int getProfileIdByBlogId(int id)
-	{
-		int profileId = 0;
-		
+			throws SQLException	{		
 		Connection connection = null;
 		PreparedStatement statement = null;
 		ResultSet resultSet = null;
-
+		int profileId = 0;
+		
 		try {
 			connection = ConnectionFactory.getInstance().getConnection();
 
@@ -146,7 +134,8 @@ public class BlogDAOSQL implements BlogDAO {
 	}
 	
 	@Override
-	public int insertBlog(BlogDTO newBlog) {
+	public int insertBlog(BlogDTO newBlog)
+			throws SQLException {
 		Connection connection = null;
 		PreparedStatement statement = null;
 		ResultSet resultSet = null;
@@ -171,9 +160,6 @@ public class BlogDAOSQL implements BlogDAO {
 			  newBlogId = resultSet.getInt(1);
 			}
 		}
-		catch (SQLException e) {
-			throw new IllegalStateException(e);
-		}
 		finally {
 			Close(connection, statement, resultSet);
 		}
@@ -182,7 +168,8 @@ public class BlogDAOSQL implements BlogDAO {
 	}
 
 	@Override
-	public int updateBlog(BlogDTO updatedBlog) {
+	public int updateBlog(BlogDTO updatedBlog)
+			throws SQLException {
 		Connection connection = null;
 		PreparedStatement statement = null;
 		ResultSet resultSet = null;
@@ -207,9 +194,6 @@ public class BlogDAOSQL implements BlogDAO {
 			  updatedBlogId = resultSet.getInt(1);
 			}
 		}
-		catch (SQLException e) {
-			throw new IllegalStateException(e);
-		}
 		finally {
 			Close(connection, statement, resultSet);
 		}
@@ -218,7 +202,8 @@ public class BlogDAOSQL implements BlogDAO {
 	}
 
 	@Override
-	public boolean deleteBlog(int blogId) {
+	public boolean deleteBlog(int blogId)
+			throws SQLException {
 		Connection connection = null;
 		PreparedStatement statement = null;
 		boolean success = false;
@@ -236,9 +221,6 @@ public class BlogDAOSQL implements BlogDAO {
 			success = true;
 
 		}
-		catch (SQLException e) {
-			throw new IllegalStateException(e);
-		}
 		finally {
 			Close(connection, statement, null);
 		}
@@ -246,51 +228,41 @@ public class BlogDAOSQL implements BlogDAO {
 		return success;
 	}
 
-	private BlogDTO GetFromResultSet(ResultSet resultSet) {
-		
+	private BlogDTO GetFromResultSet(ResultSet resultSet)
+			throws SQLException {
 		BlogDTO blog = null;
 		
-		try {
-			while (resultSet.next()) {
-				blog = new BlogDTO(
-						resultSet.getInt("id"),
-						resultSet.getInt("profile_id"),
-						resultSet.getString("title"),
-						resultSet.getString("description"));
-			}
-		}
-		catch (SQLException e) {
-			throw new IllegalStateException(e);
+		while (resultSet.next()) {
+			blog = new BlogDTO(
+					resultSet.getInt("id"),
+					resultSet.getInt("profile_id"),
+					resultSet.getString("title"),
+					resultSet.getString("description"));
 		}
 		
 		return blog;
 	}
 	
-	private List<BlogDTO> PopulateFromResultSet(ResultSet resultSet) {
-		
+	private List<BlogDTO> PopulateFromResultSet(ResultSet resultSet)
+			throws SQLException {
 		List<BlogDTO> blogs = new ArrayList<BlogDTO>();
 		
-		try {
-			while (resultSet.next()) {
-				BlogDTO b = new BlogDTO(
-						resultSet.getInt("id"),
-						resultSet.getInt("profile_id"),
-						resultSet.getString("title"),
-						resultSet.getString("description"));
-
-				blogs.add(b);
-			}
-		}
-		catch (SQLException e) {
-			throw new IllegalStateException(e);
+		while (resultSet.next()) {
+			BlogDTO b = new BlogDTO(
+				resultSet.getInt("id"),
+				resultSet.getInt("profile_id"),
+				resultSet.getString("title"),
+				resultSet.getString("description"));
+			blogs.add(b);
 		}
 		
 		return blogs;
 	}
 
-	private void Close(Connection connection, PreparedStatement statement, ResultSet resultSet) {
-		try { if (resultSet != null) resultSet.close(); } catch (SQLException e) { e.printStackTrace(); };
-		try { if (statement != null) statement.close(); } catch (SQLException e) { e.printStackTrace(); };
-		try { if (connection != null) connection.close(); } catch (SQLException e) { e.printStackTrace(); };
+	private void Close(Connection connection, PreparedStatement statement, ResultSet resultSet)
+			throws SQLException {
+		if (resultSet != null) { resultSet.close(); } 
+		if (statement != null) { statement.close(); }
+		if (connection != null) { connection.close(); } 
 	}
 }

@@ -4,7 +4,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-import nl.cerios.clog.ui.AppConfiguration;
+import nl.cerios.clog.business.AppConfiguration;
 
 public class ConnectionFactory {
 
