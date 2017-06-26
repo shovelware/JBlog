@@ -1,4 +1,4 @@
-<%@attribute name="profile" required="true" type="nl.cerios.clog.database.ProfileDTO"%>
+<%@attribute name="profile" required="true" type="nl.cerios.clog.domain.ProfileDO"%>
 <%@taglib prefix="t" tagdir="/WEB-INF/tags"%>
 <div class="box profile">
 	<div class="timestamp" style="float:right">Joined: <t:localDate date="${profile.joinDate}"/></div>

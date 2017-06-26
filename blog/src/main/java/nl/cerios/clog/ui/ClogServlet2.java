@@ -18,19 +18,41 @@ import javax.servlet.http.HttpSession;
 
 import nl.cerios.clog.business.AppConfiguration;
 import nl.cerios.clog.business.ClogLogic;
+import nl.cerios.clog.database.Authenticator;
 import nl.cerios.clog.domain.BlogDO;
 import nl.cerios.clog.domain.PostDO;
 import nl.cerios.clog.domain.ProfileDO;
 
+import nl.cerios.clog.exception.AuthenticationException;
+import nl.cerios.clog.exception.InvalidInputException;
+import nl.cerios.clog.exception.ProcessingException;
+
 import org.yaml.snakeyaml.Yaml;
 
 import org.owasp.esapi.ESAPI;
-import org.owasp.esapi.errors.ValidationException;
 
 public class ClogServlet2 extends HttpServlet{
 	private static final long serialVersionUID = 1434964914372365428L;
 	
-	private ClogLogic business;
+	private ClogLogic business = new ClogLogic();
+	
+	private Authenticator tempAuth = new Authenticator();
+	
+	private final int MAGICPOSTNUMBER = 10;
+	
+	private enum ErrorCode {
+		AUTHENTICATION(401),
+		FORBIDDEN(403),
+		NOTFOUND(404),
+		SERVER(500);
+		
+		private final int errorCode;
+		
+		ErrorCode(int errorCode)
+		{
+			this.errorCode = errorCode;
+		}
+	}
 	
 	public void init(ServletConfig config)
 			   throws ServletException {
@@ -56,26 +78,27 @@ public class ClogServlet2 extends HttpServlet{
     		String url = request.getRequestURI().substring(request.getContextPath().length());
 		
 			switch (url) {
-				case "/post/submit":		submitNewPost(request, response);		break; //Submit new post
-				case "/blog/submit":												break; //Submit new blog	
-				case "/profile/submit":		submitNewProfile(request, response);	break; //Submit new profile
+				case "/post/submit":		submitNewPost(request, response);		break; //Submit new DO post
+				case "/blog/submit":		submitNewBlog(request, response);		break; //Submit new DO blog	
+				case "/profile/submit":		submitNewProfile(request, response);	break; //Submit new DO profile
 				
-				case "/post/resubmit":		submitEditedPost(request, response);	break; //Submit edited post
-				case "/blog/resubmit":		submitEditedBlog(request, response);	break; //Submit edited blog	
-				case "/profile/resubmit":	submitEditedProfile(request, response);	break; //Submit edited profile
+				case "/post/resubmit":		submitUpdatedPost(request, response);	break; //Submit updated DO post
+				case "/blog/resubmit":		submitUpdatedBlog(request, response);	break; //Submit updated DO blog	
+				case "/profile/resubmit":	submitUpdatedProfile(request, response);break; //Submit updated DO profile
 
 	    		case "/post":				showPostById(request, response);		break; //View post?id=
 	    		case "/blog":				showBlogById(request, response);		break; //View blog?id=
 	    		case "/profile":			showProfileById(request, response);		break; //View profile?id=
 	    		
 				case "/login/submit":		submitLogin(request, response);			break; //Login
-				case "/logout":			submitLogout(request, response);		break; //Logout
+				case "/logout":				submitLogout(request, response);		break; //Logout
 				
 				default:
 	        		String rc = request.getContextPath();
 	        		System.out.println("Default POST " + rc + url);
+	        		
 	        		request.setAttribute("errordetails", "POST: How did you even?");
-	        		showError500(request, response);
+	        		showError(request, response, ErrorCode.SERVER);
 					break;
 			}
 
@@ -83,7 +106,7 @@ public class ClogServlet2 extends HttpServlet{
 		catch (ServletException e) {
 			System.err.println("Servlet POST " + e);
 			request.setAttribute("errordetails", e.getMessage());
-			showError500(request, response);
+			showError(request, response, ErrorCode.SERVER);
 		}
 	}
 
@@ -104,13 +127,11 @@ public class ClogServlet2 extends HttpServlet{
     		case "/blog":			showBlogById(request, response);		break; //View blog?id=
     		case "/profile":		showProfileById(request, response);		break; //View profile?id=
     		
-    		case "/blog/me":		showLoggedInBlog(request, response);	break; //View My Blog
     		case "/profile/me":		showLoggedInProfile(request, response);	break; //View My Profile
     		
 			case "/post/new":		showNewPostForm(request, response);		break; //Write new post
     		case "/profile/new":	showNewProfileForm(request, response);  break; //Add new Profile
-    		
-			case "/blog/new":		showLoggedInBlog(request, response);	break; //Add new blog (Unneeded atm)
+			case "/blog/new":		showNewBlogForm(request, response);		break; //Add new blog
 			
 			case "/post/edit":		showEditPostForm(request, response);	break; //Edit post
     		case "/profile/edit":	showEditProfileForm(request, response); break; //Edit Profile
@@ -125,7 +146,7 @@ public class ClogServlet2 extends HttpServlet{
         		System.out.println("Default GET: " + rc + url);
         	
         		request.setAttribute("errordetails", "GET: How did you even?");
-    			showError500(request, response);;        		
+    			showError(request, response, ErrorCode.SERVER);        		
     			break;
     		}
     		
@@ -133,7 +154,7 @@ public class ClogServlet2 extends HttpServlet{
     	catch (ServletException e){
     		System.err.println("Servlet GET " + e);
     		request.setAttribute("errordetails", e.getMessage());
-    		showError500(request, response);
+    		showError(request, response, ErrorCode.SERVER);
     	}
     	
     }
@@ -141,67 +162,98 @@ public class ClogServlet2 extends HttpServlet{
     //Comments:
     //GET ~~ SHOW: will attempt to redirect to a new HTML page, failing that it will go to error
     //POST ~~ SUBMIT: will validate data and then SHOW a page based on result
+    //General function layout:
+    //Data for lookup/Authentication checks
+    //Page Variables = null
+    //[try Database access][catch error]
+    //Populate request
+    //Successful operation request forward
+    
     
     //Add new post [POST] [DB interaction, safeties]
     protected void submitNewPost(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		if (checkLoggedIn(request.getSession())) {
-			int blogId = Integer.parseInt(request.getParameter("blogId"));
-			String ptitle = (String) request.getParameter("title");
-			String ptext = (String) request.getParameter("text");
-
-			PostDO post = new PostDO(0, blogId, LocalDateTime.now(), ptitle, ptext);
-			
-			postDB.insertPost(cleanPost);
-			showLoggedInBlog(request, response);
+		if (checkLoggedIn(request.getSession()) == false) {
+			showError(request, response, ErrorCode.AUTHENTICATION, "Error submitting post: User not logged in!");
+			return;
+			//Maybe redirect to edit post form or sth?
 		}
+		int blogId = Integer.parseInt(request.getParameter("blogId"));
+		String ptitle = (String) request.getParameter("title");
+		String ptext = (String) request.getParameter("text");
 
-		else {
-			showError401(request, response);
+		PostDO post = new PostDO(0, blogId, getLoggedInId(null), LocalDateTime.now(), ptitle, ptext);
+		
+		try {
+			business.insertPost(post, getLoggedInProfile(request.getSession()));
+		} 
+		catch (AuthenticationException e) {
+			showError(request, response, ErrorCode.AUTHENTICATION, e.getMessage());
+			return;
+    	} 
+		catch (InvalidInputException | ProcessingException e) {
+    		showError(request, response, ErrorCode.SERVER, e.getMessage());
+    		return;
 		}
+		
+		showLoggedInProfile(request, response);
+		return;
 	}
 
     //Automatic for now, this is useless [evt. db interaction]
 	protected void submitNewBlog(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		//sanitize input
+		showError(request, response, ErrorCode.NOTFOUND); //TODO: Remove
 	}
 	
-    //[DB ACCESS PROFILE, AUTH, BLOG]
+    //[DB ACCESS PROFILE, AUTH, BLOG] TODO: Rewrite auth
 	protected void submitNewProfile(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		if (checkLoggedIn(request.getSession())) {
+		if (checkLoggedIn(request.getSession()) == true) {
 			showLoggedInProfile(request, response);
+			return;
 		}
 
-		else {
-			String username = (String) request.getParameter("name");
-			String motto = (String) request.getParameter("motto");
-			String password = (String) request.getParameter("password");
+		String username = (String) request.getParameter("name");
+		String motto = (String) request.getParameter("motto");
+		String password = (String) request.getParameter("password");
 
-			ProfileDTO profile = new ProfileDTO(0, username, motto, LocalDateTime.now());
-			ProfileDTO cleanProfile = sanitize(profile);
-
-			profileDB.insertProfile(cleanProfile);
-			authenticator.InsertPassword(username, password);
-
-			int profileId = authenticator.GetIdByName(username);
-
-			BlogDTO newBlog = new BlogDTO(0, profileId, "Blog " + username, username + "'s blog");
-			BlogDTO cleanBlog = sanitize(newBlog);
-			
-			blogDB.insertBlog(cleanBlog);
-			
-			boolean authenticated = authenticator.AuthenticateUser(username, password);
-
-			if (authenticated) {
-				request.getSession().setAttribute("loggedInUser", username);
-				showLoggedInProfile(request, response);
+		ProfileDO profile = new ProfileDO(0, username, motto, LocalDateTime.now());
+		int newProfileId = 0;
+		
+			try {
+				newProfileId = business.insertProfile(profile,  password);
+				BlogDO newBlog = new BlogDO(0, newProfileId, "Blog " + username, username + "'s blog");
+				business.insertBlog(newBlog, profile);
 			}
+			catch (InvalidInputException | ProcessingException | AuthenticationException e) {
+				showError(request, response, ErrorCode.SERVER, e.getMessage());
+				return;
+			}
+		
+		boolean authenticated = tempAuth.AuthenticateUser(username, password);
+
+		if (authenticated) {
+			request.getSession().setAttribute("loggedInUser", profile);
+			showLoggedInProfile(request, response);
+			return;
 		}
 	}
 	
-	protected void submitEditedPost(HttpServletRequest request, HttpServletResponse response)
+	//TODO: Remove
+	protected void submitUpdatedPost(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		showError(request, response, ErrorCode.NOTFOUND);
+	}	
+	protected void submitUpdatedBlog(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		showError(request, response, ErrorCode.NOTFOUND);
+	}
+	protected void submitUpdatedProfile(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		showError(request, response, ErrorCode.NOTFOUND);
+	}
+/*	TODO: protected void submitEditedPost(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		if (!checkLoggedIn(request.getSession())) {
 			showError401(request, response);
@@ -249,44 +301,61 @@ public class ClogServlet2 extends HttpServlet{
 		}
 	}
 	
-    //[DB ACCESS PROFILE, BLOG]TODO
+    //[DB ACCESS PROFILE, BLOG]
 	protected void submitEditedProfile(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		if (!checkLoggedIn(request.getSession())) {
-			showError401(request, response);
+		if (checkLoggedIn(request.getSession()) == false) {
+			showError(request, response, ErrorCode.AUTHENTICATION);
+			return;
 		}
 
-		else {
-				int profileId = Integer.parseInt(request.getParameter("profileId"));
-				String profileName = (String) request.getParameter("name");
-				String profileMotto = (String) request.getParameter("motto");
-				LocalDateTime profileJoinDate = LocalDateTime.parse(request.getParameter("joinDate"));
+			int profileId = Integer.parseInt(request.getParameter("profileId"));
+			String profileName = (String) request.getParameter("name");
+			String profileMotto = (String) request.getParameter("motto");
+			LocalDateTime profileJoinDate = LocalDateTime.parse(request.getParameter("joinDate"));
 	
-				ProfileDTO profile = new ProfileDTO(profileId, profileName, profileMotto, profileJoinDate);
-				ProfileDTO cleanProfile = sanitize(profile);
-					
-				profileDB.updateProfile(cleanProfile);
-				
-				showLoggedInProfile(request, response);
+			ProfileDO profile = new ProfileDO(profileId, profileName, profileMotto, profileJoinDate);
+			ProfileDO user = getLoggedInProfile(request.getSession());
+			
+			try {
+				business.updateProfile(profile, user);
 			}
-	}
+			catch(ProcessingException e)
+			{
+				
+			}
+			showLoggedInProfile(request, response);
+			return;
+	}*/
 	
-    //Auth [POST]
+    //Auth [POST] TODO: Rewrite auth
 	protected void submitLogin(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		String username = (String) request.getParameter("username");
 		String password = (String) request.getParameter("password");
+		ProfileDO user = null;
 
-		boolean authenticated = authenticator.AuthenticateUser(username, password);
+		try {
+			user = business.getProfile(tempAuth.GetIdByName(username));
+		} 
+		catch (ProcessingException e) {
+			request.setAttribute("errorMessage", e.getMessage());
+			showLogin(request, response);
+			return;
+		}
+		
+		boolean authenticated = tempAuth.AuthenticateUser(username, password);
 
 		if (authenticated) {
-			request.getSession().setAttribute("loggedInUser", username);
+			request.getSession().setAttribute("loggedInUser", user);
 			showLoggedInProfile(request, response);
+			return;
 		}
 
 		else {
 			request.setAttribute("errorMessage", "Login Failed, please try again");
 			showLogin(request, response);
+			return;
 		}
 	}
 	
@@ -294,9 +363,9 @@ public class ClogServlet2 extends HttpServlet{
 			throws ServletException, IOException {
 		request.getSession().removeAttribute("loggedInUser");
 		showIndex(request, response);
+		return;
 	}
 
-    
     //Admin stuff [POST]
     //AdminSessionEnable(res, req)
     //AdminSessionDisable(res, req)
@@ -304,38 +373,79 @@ public class ClogServlet2 extends HttpServlet{
     ////New forms
 	protected void showNewPostForm(HttpServletRequest request, HttpServletResponse response) 
 			throws ServletException, IOException {
-		if (checkLoggedIn(request.getSession())) {
-			
-			int profileId = getLoggedInId(request.getSession());
-			int blogId = blogDB.getBlogByProfileId(profileId).get(0).getId();
-			
-			request.setAttribute("profileId", profileId);
-			request.setAttribute("blogId", blogId);
-			
-			getServletContext().getRequestDispatcher("/postNew.jsp").forward(request, response);
+		if (checkLoggedIn(request.getSession()) == false) {
+			showError(request, response, ErrorCode.AUTHENTICATION, "You must login before posting!");
+			return;
 		}
+		
+		int profileId = 0;
+		List<BlogDO> blogs = new ArrayList<BlogDO>();
+		
+		try{
 
-		else {
-			showError401(request, response);
+			profileId = getLoggedInId(request.getSession());
+			blogs = business.getBlogsByProfile(profileId);
 		}
+		catch(ProcessingException e)
+		{
+			showError(request, response, ErrorCode.SERVER, e.getMessage());
+			return;
+		}
+			
+		request.setAttribute("profileId", profileId);
+		request.setAttribute("blogs", blogs);
+		getServletContext().getRequestDispatcher("/postNew.jsp").forward(request, response);
+		return;
 	}
-    //showNewBlogForm(req, res)
+	
+    protected void showNewBlogForm(HttpServletRequest request, HttpServletResponse response)
+    	throws ServletException, IOException {
+    	if (checkLoggedIn(request.getSession()) == false)
+    	{
+    		showError(request, response, ErrorCode.AUTHENTICATION, "You must login before adding a blog!");
+    		return;
+    	}
+	
+    	int profileId = 0;
+    	
+		profileId = getLoggedInId(request.getSession());
+		
+    	request.setAttribute("profileId", profileId);
+		getServletContext().getRequestDispatcher("/blogNew.jsp").forward(request, response);
+		return;
+}
+	
 	protected void showNewProfileForm(HttpServletRequest request, HttpServletResponse response) 
 			throws ServletException, IOException {
-		if (!checkLoggedIn(request.getSession())) {
+		if (checkLoggedIn(request.getSession()) == false) {
 			getServletContext().getRequestDispatcher("/profileNew.jsp").forward(request, response);
+			return;
 		}
 
 		else {
 			showLoggedInProfile(request, response);
+			return;
 			}
 	}
 	
-	////Edit forms [Prepopulate form with DTO content]
+	////TODO: Remove
+	protected void showEditPostForm(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		showError(request, response, ErrorCode.NOTFOUND); 
+	}	
+	protected void showEditProfileForm(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		showError(request, response, ErrorCode.NOTFOUND); 
+	}	
+	protected void showEditBlogForm(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		showError(request, response, ErrorCode.NOTFOUND); 
+		
+	}
+/*	////TODO: Edit forms [Prepopulate form with DO content]
 	protected void showEditPostForm(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		if (checkLoggedIn(request.getSession())) {
-			//Parse implicit ID from URL
 			int postId = 0;
 			
 			try {
@@ -380,320 +490,276 @@ public class ClogServlet2 extends HttpServlet{
 	}
 	protected void showEditBlogForm(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		if (checkLoggedIn(request.getSession())) {
-			int profileId = getLoggedInId(request.getSession());
-			BlogDTO blog = blogDB.getBlogByProfileId(profileId).get(0);
-			request.setAttribute("blog", blog);
-			getServletContext().getRequestDispatcher("/blogEdit.jsp").forward(request, response);
+		if (checkLoggedIn(request.getSession()) == false) {
+			showError(request, response, ErrorCode.AUTHENTICATION, "You must login to edit blogs.");
+			return;
 		}
 		
-		else{
-			showError401(request, response);
+			int profileId = getLoggedInId(request.getSession());
+		try {
+			BlogDO blog = business.getBlo(profileId).get(0);
+			request.setAttribute("blog", blog);
 		}
-	}
+		catch (ProcessingException e)
+		{
+			showError(request, response, ErrorCode.SERVER);
+			return;
+		}
+			
+		getServletContext().getRequestDispatcher("/blogEdit.jsp").forward(request, response);		
+	}*/
 	
+	////Find forms
 	protected void showFindPostForm(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		getServletContext().getRequestDispatcher("/postFind.jsp").forward(request, response);
+		return;
 	}
 	
 	protected void showFindBlogForm(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		getServletContext().getRequestDispatcher("/blogFind.jsp").forward(request, response);
+		return;
 	}
 	
 	protected void showFindProfileForm(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		getServletContext().getRequestDispatcher("/profileFind.jsp").forward(request, response);
+		return;
 	}
 	
-    
-    //Generic pages
+    ////Generic pages
 	protected void showIndex(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-    	RequestDispatcher rd = getServletContext().getRequestDispatcher("/index.jsp");
-    	rd.forward(request, response);
+    	getServletContext().getRequestDispatcher("/index.jsp").forward(request, response);
+    	return;
     }
 	
-	// Show about page
 	protected void showAbout(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		getServletContext().getRequestDispatcher("/about.jsp").forward(request, response);
+		return;
 	}
 	
-	// Show login page
 	protected void showLogin(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		getServletContext().getRequestDispatcher("/login.jsp").forward(request, response);
+		return;
 	}
 	
-	// Show recent posts
 	protected void showRecentPosts(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		List<PostDTO> posts = postDB.getPostByTimestamp(LocalDateTime.now(), postCount);
-		List<PostDTO> cleanPosts = sanitize(posts);		
-		request.setAttribute("posts", cleanPosts);
+		List<PostDO> posts = new ArrayList<PostDO>();
+		
+		try {
+			posts = business.getPostsRecent(MAGICPOSTNUMBER);
+			request.setAttribute("posts", posts);
+		}
+		catch (ProcessingException e)
+		{
+			showError(request, response, ErrorCode.SERVER, e.getMessage());
+			return;
+		}
 
 		getServletContext().getRequestDispatcher("/postRecent.jsp").forward(request, response);
+		return;
 	}
-	
-	//// Content pages
+
 	//Show Post by ID [PARSES URI]
 	protected void showPostById(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		
-		//Parse implicit ID from URL
 		int postId = 0;
 		
 		try {
 			postId = java.lang.Integer.parseInt(request.getParameter("id"));
 		}
 		catch (NumberFormatException e) {
-			request.setAttribute("errordetails", "Malformed Post ID: " + postId);
-			getServletContext().getRequestDispatcher("/http500.jsp").forward(request, response);
+			showError(request, response, ErrorCode.SERVER, "Malformed post ID.");
 			return;
 		}
 
-		//If the ID looks good, retrieve that post
-		if (postId > 0)
-		{	
-			PostDTO post = postDB.getPostById(postId);
-			
-			//If the post is good, punch it into the request
-			if (post != null)
-			{
-				PostDTO cleanPost = sanitize(post);
-				request.setAttribute("post", cleanPost);
-
-				getServletContext().getRequestDispatcher("/postView.jsp").forward(request, response);
-			}
-			
-			//If we haven't put a post in the request, there's been a problem
-			if (request.getAttribute("post") == null)
-			{
-				request.setAttribute("errordetails", "Post with ID " + postId + " doesn't exist.");
-				getServletContext().getRequestDispatcher("/http500.jsp").forward(request, response);
-			}
+		if (postId <= 0)
+		{
+			showError(request, response, ErrorCode.SERVER, "Malformed post ID.");
+			return;
 		}
 		
-		else
-		 {
-			request.setAttribute("errordetails", "Malformed Post ID: " + postId);
-			getServletContext().getRequestDispatcher("/http500.jsp").forward(request, response);
+		PostDO post = null;
+		
+		try{
+			post = business.getPost(postId);
 		}
+		catch (ProcessingException e)
+		{
+			showError(request, response, ErrorCode.SERVER, e.getMessage());
+			return;
+		}
+			
+		request.setAttribute("post", post);
+		getServletContext().getRequestDispatcher("/postView.jsp").forward(request, response);
+		return;
 	}
 	
 	//Show Blog by ID [PARSES URI]
     protected void showBlogById(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-    	//Parse implicit ID from URL
 		int blogId = 0;
 		
 		try {
 			blogId = java.lang.Integer.parseInt(request.getParameter("id"));
 		}
 		catch (NumberFormatException e) {
-			request.setAttribute("errordetails", "Malformed Blog ID: " + blogId);		
-			getServletContext().getRequestDispatcher("/http500.jsp").forward(request, response);
+			showError(request, response, ErrorCode.SERVER, "Malformed blog ID.");
 			return;
 		}
 
-		//If the ID looks good, retrieve that blog
-		if (blogId > 0)
-		{	
-			BlogDTO blog = blogDB.getBlogById(blogId);
-			
-			//If the blog is good, add it to the request and try grab some posts
-			if (blog != null)
-			{
-				BlogDTO cleanBlog = sanitize(blog);
-				request.setAttribute("blog", cleanBlog);
-				
-				List<PostDTO> blogPosts = postDB.getPostByBlogId(blogId);
-				List<PostDTO> cleanPosts = sanitize(blogPosts);
-				request.setAttribute("posts", cleanPosts);
-				
-				getServletContext().getRequestDispatcher("/blogView.jsp").forward(request, response);
-			}
-			
-			//If we haven't put a post in the request, there's been a problem
-			if (request.getAttribute("blog") == null)
-			{
-				request.setAttribute("errordetails", "Blog with ID " + blogId + " doesn't exist.");
-				getServletContext().getRequestDispatcher("/http500.jsp").forward(request, response);
-			}
+		if (blogId <= 0)
+		{
+			showError(request, response, ErrorCode.SERVER, "Malformed blog ID.");
+			return;
 		}
 		
-		else  {
-			request.setAttribute("errordetails", "Malformed Blog ID: " + blogId);
-			getServletContext().getRequestDispatcher("/http500.jsp").forward(request, response);
+		BlogDO blog = null;
+		List<PostDO> posts = new ArrayList<PostDO>();
+		
+		try{
+			blog = business.getBlog(blogId);
+			posts = business.getPostsByBlog(blogId, MAGICPOSTNUMBER);
 		}
-    }
+		
+		catch(ProcessingException e)
+		{
+			showError(request, response, ErrorCode.SERVER, e.getMessage());
+			return;
+		}
+
+		request.setAttribute("blog", blog);
+		request.setAttribute("posts", posts);
+		getServletContext().getRequestDispatcher("/blogView.jsp").forward(request, response);
+		return;
+	}
     
-    //[PARSES URI] Show Profile by ID
+    //Show Profile by ID [PARSES URI]
     protected void showProfileById(HttpServletRequest request, HttpServletResponse response)
     	throws ServletException, IOException {
-    		
-    		//Parse implicit ID from URI
     		int profileId = 0;
     		
     		try {
     			profileId = java.lang.Integer.parseInt(request.getParameter("id"));
     		}
     		catch (NumberFormatException e) {
-    			request.setAttribute("errordetails", "Malformed Profile ID!");		
-    			getServletContext().getRequestDispatcher("/http500.jsp").forward(request, response);
+    			showError(request, response, ErrorCode.SERVER, "Malformed profile ID.");
     			return;
     		}
-    		
-    		//If the ID looks good, retrieve that profile
-    		if (profileId != 0)
-    		{	
-    			ProfileDTO profile = profileDB.getProfileById(profileId);
+    	
+    		if (profileId <= 0)
+    		{
+    			showError(request, response, ErrorCode.SERVER, "Malformed profile ID.");
+    			return;
+    		}
+    	
+    		ProfileDO profile = null;
+    		List<BlogDO> blogs = new ArrayList<BlogDO>();
     			
-    			//If the profile is good, add it to the request
-    			if (profile != null)
-    			{
-    				ProfileDTO cleanProfile = sanitize(profile);
-    				request.setAttribute("profile", cleanProfile);
-    				
-    				try{
-    					BlogDTO cleanBlog = sanitize(blogDB.getBlogByProfileId(cleanProfile.getId()).get(0));
-    					request.setAttribute("blog", cleanBlog);
-    				}
-    				
-    				catch (Exception e)
-    				{
-    					System.out.println(e.getMessage());
-    				}
-    				
-    				
-    				getServletContext().getRequestDispatcher("/profileView.jsp").forward(request, response);
-    			}
-    			
-    			//If we haven't put a profile in the request, there's been a problem
-    			if (request.getAttribute("profile") == null)
-    			{
-    				request.setAttribute("errordetails", "Profile with ID " + profileId + " doesn't exist.");
-    				getServletContext().getRequestDispatcher("/http500.jsp").forward(request, response);
-    			}
+    		try {
+    			profile = business.getProfile(profileId);
+    			blogs =  business.getBlogsByProfile(profileId);
+    		}
+    		catch (ProcessingException e)
+    		{
+				showError(request, response, ErrorCode.SERVER, e.getMessage());
+				return;
     		}
     		
-    		else {
-    			request.setAttribute("errordetails", "Malformed Profile ID: " + profileId);
-    			getServletContext().getRequestDispatcher("/http500.jsp").forward(request, response);
-    		}
+    		request.setAttribute("profile", profile);
+    		request.setAttribute("blog", blogs);
+    		getServletContext().getRequestDispatcher("/profileView.jsp").forward(request, response);
+    		return;
     }
     
     //[PARSES SESSION] //Shows logged in profile or error
+   
     protected void showLoggedInProfile(HttpServletRequest request, HttpServletResponse response)
         	throws ServletException, IOException {
-    	
-    	//First we have to be logged in
-    	if (checkLoggedIn(request.getSession()))
+    	if (!checkLoggedIn(request.getSession()))
     	{
-			//Get the ID of the logged in Profile
-			int	profileId = getLoggedInId(request.getSession());
-	
-			//If the ID looks good, retrieve that profile
-			if (profileId != 0)
-			{	
-				ProfileDTO profile = profileDB.getProfileById(profileId);
-				
-				//If the profile is good, punch it into the request
-				if (profile != null)
-				{
-					ProfileDTO cleanProfile = sanitize(profile);
-					request.setAttribute("profile", cleanProfile);
-					try{
-    					BlogDTO cleanBlog = sanitize(blogDB.getBlogByProfileId(cleanProfile.getId()).get(0));
-    					request.setAttribute("blog", cleanBlog);
-    				}
-    				
-    				catch (Exception e)
-    				{
-    					System.out.println(e.getMessage());
-    				}
-					getServletContext().getRequestDispatcher("/profileView.jsp").forward(request, response);
-				}
-				
-				//If we haven't put a profile in the request, there's been a problem
-				if (request.getAttribute("profile") == null)
-				{
-					request.setAttribute("errordetails", "Couldn't retrieve profile :(");
-					showError500(request, response);
-				}
-			}
+    		showError(request, response, ErrorCode.AUTHENTICATION);
+    		return;
     	}
     	
-    	else showError401(request, response);
-    }
+		int	profileId = 0;
+		ProfileDO profile = null;
+		List<BlogDO> blogs = new ArrayList<BlogDO>();
+		
+		try {
+			profileId = getLoggedInId(request.getSession());
+			profile = business.getProfile(profileId);
+			blogs = business.getBlogsByProfile(profileId);
+		}
+		catch (ProcessingException e) {
+			showError(request, response, ErrorCode.SERVER, e.getMessage());
+			return;
+		}
+		
+		request.setAttribute("profile", profile);
+    	request.setAttribute("blogs", blogs);	
+		getServletContext().getRequestDispatcher("/profileView.jsp").forward(request, response);
+		return;
+	}
     
-    //showMyBlog(req, res) //Shows logged in blog or error [NEEDED?]
+    ////Errors
+    protected void showError(HttpServletRequest request, HttpServletResponse response, ErrorCode errorCode, String errorMessage)
+			throws ServletException, IOException {
+		request.setAttribute("errordetails", errorMessage);
+		showError(request, response, errorCode);
+    } 
     
-    protected void showLoggedInBlog(HttpServletRequest request, HttpServletResponse response)
-        	throws ServletException, IOException {
-    	
-    	//Check if we're logged in
-    	if (checkLoggedIn(request.getSession()))
+    protected void showError(HttpServletRequest request, HttpServletResponse response, ErrorCode errorCode)
+		throws ServletException, IOException {
+    	switch (errorCode)
     	{
-    		int profileId = getLoggedInId(request.getSession());
-    		ProfileDTO profile = profileDB.getProfileById(profileId);
-    		BlogDTO blog = blogDB.getBlogByProfileId(profileId).get(0);
-    		
-    		if (blog != null && profile != null)
-    		{
-    			BlogDTO	cleanBlog = sanitize(blog);
-    			request.setAttribute("blog", cleanBlog);
-    			
-				List<PostDTO> blogPosts = postDB.getPostByBlogId(blog.getId());
-				List<PostDTO> cleanPosts = sanitize(blogPosts);				
-				request.setAttribute("posts", cleanPosts);
-				
-				getServletContext().getRequestDispatcher("/blogView.jsp").forward(request, response);
-    		}
+    	case AUTHENTICATION:
+    		getServletContext().getRequestDispatcher("/http401.jsp").forward(request, response);
+    		break;
+    	case FORBIDDEN:
+    		getServletContext().getRequestDispatcher("/http403.jsp").forward(request, response);
+    		break;
+    	case NOTFOUND:
+    		getServletContext().getRequestDispatcher("/http404.jsp").forward(request, response);
+    		break;
+    	case SERVER:
+    		getServletContext().getRequestDispatcher("/http500.jsp").forward(request, response);
+    		break;
+    	default:
+    		getServletContext().getRequestDispatcher("/httperr.jsp").forward(request, response);
+    		break;
     	}
+    }
+    
+    protected ProfileDO getLoggedInProfile(HttpSession session)
+    {
+    	ProfileDO user = null;
     	
-    	else showError401(request, response);
+    	user = (ProfileDO) session.getAttribute("loggedInUser");
+    	
+    	return user;
     }
     
-    //Errors
-    protected void showError401(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
-		getServletContext().getRequestDispatcher("/http401.jsp").forward(request, response);
-    }
-    
-    protected void showError403(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
-		getServletContext().getRequestDispatcher("/http403.jsp").forward(request, response);
-    }
-    
-    protected void showError404(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
-		getServletContext().getRequestDispatcher("/http404.jsp").forward(request, response);
-    }
-    
-    protected void showError500(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
-		getServletContext().getRequestDispatcher("/http500.jsp").forward(request, response);
-    }
-    
-    
+
     //[PARSES SESSION] Gets the ID of the currently logged in user, or 0 if nobody's logged in
     protected int getLoggedInId(HttpSession session)
     {
     	int id = 0;
-    	
-    	Object potentialId = authenticator.GetIdByName((String)session.getAttribute("loggedInUser"));
-    	//Dunno about using the auth class for this?
-    	
-    	if (potentialId != null)
+    	ProfileDO user = (ProfileDO) session.getAttribute("loggedInUser");
+
+    	if (user != null)
     	{
-    		id = (int)potentialId;
+    		id = user.getId();
     	}
     	
     	return id;
     }
+
 
     //[PARSES SESSION] Returns true if logged in
     protected boolean checkLoggedIn(HttpSession session)
@@ -708,6 +774,7 @@ public class ClogServlet2 extends HttpServlet{
 		return loggedIn;
     }
     
+    
     //[PARSES SESSION]
     protected boolean checkAdmin(HttpSession session)
     {
@@ -720,4 +787,5 @@ public class ClogServlet2 extends HttpServlet{
     	
     	return admin;
     }
+
 }

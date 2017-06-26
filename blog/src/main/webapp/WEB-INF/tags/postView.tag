@@ -1,4 +1,4 @@
-<%@attribute name="post" required="true" type="nl.cerios.clog.database.PostDTO"%>
+<%@attribute name="post" required="true" type="nl.cerios.clog.domain.PostDO"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <%@taglib prefix="t" tagdir="/WEB-INF/tags"%>
 

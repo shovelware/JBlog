@@ -27,9 +27,9 @@ import java.sql.SQLException;
 import org.owasp.esapi.errors.ValidationException;
 
 public class ClogLogic {
-	ProfileDAOSQL dbProfile;
-	BlogDAOSQL dbBlog;
-	PostDAOSQL dbPost;
+	ProfileDAOSQL dbProfile = new ProfileDAOSQL();
+	BlogDAOSQL dbBlog = new BlogDAOSQL();
+	PostDAOSQL dbPost = new PostDAOSQL();
 	
 	//TODO: Implement images
 	//ImageDAOSQL dbPic;
@@ -59,7 +59,14 @@ public class ClogLogic {
 		PostDO cleanPost = null;
 		
 		try {
-			postData = dbPost.getPostById(postId);
+			postData = dbPost.getPostById(postId);		
+			}
+		catch (SQLException e)
+		{
+			throw new ProcessingException("Error retrieving post.", e);
+		}
+		
+		try {
 			postDomain = postDataToDomain(postData, dbBlog.getProfileIdByBlogId(postData.getBlogId()));			
 			cleanPost = sanitizePost(postDomain);
 		}
@@ -77,7 +84,14 @@ public class ClogLogic {
 		List<PostDO> cleanPosts = new ArrayList<PostDO>();
 		
 		try {
-			postsData = dbPost.getPostsRecent(count);
+			postsData = dbPost.getPostsRecent(count);		
+		}
+		catch (SQLException e)
+		{
+			throw new ProcessingException("Error retrieving posts.", e);
+		}
+		
+		try {
 			for (PostDTO p : postsData)
 			{
 				postsDomain.add(postDataToDomain(p, dbBlog.getProfileIdByBlogId(p.getBlogId())));
@@ -99,6 +113,13 @@ public class ClogLogic {
 		
 		try{
 			postsData = dbPost.getPostsByBlogId(blogId, count);
+		}
+		catch (SQLException e)
+		{
+			throw new ProcessingException("Error retrieving profile.", e);
+		}
+		
+		try {
 			for(PostDTO p : postsData)
 			{
 				postsDomain.add(postDataToDomain(p, dbBlog.getProfileIdByBlogId(p.getBlogId())));
@@ -148,13 +169,18 @@ public class ClogLogic {
 			try{
 				cleanPost = sanitizePost(newPost);
 				postData = postDomainToData(cleanPost);
-				newId = dbPost.insertPost(postData);
 			}
-			
-			//Validation / Insertion problem
-			catch(ValidationException | SQLException e)
+			catch(ValidationException e)
 			{
 				throw new ProcessingException("Error processing post.", e);
+			}
+			
+			try {
+				newId = dbPost.insertPost(postData);
+			}
+			catch(SQLException e)
+			{
+				throw new ProcessingException("Error saving post.", e);
 			}
 		}
 		
@@ -194,22 +220,25 @@ public class ClogLogic {
 			try{
 				cleanPost = sanitizePost(updatedPost);
 				postData = postDomainToData(cleanPost);
-				int newId = dbPost.updatePost(postData);
-				success = (newId != 0);
 			}
-			
-			//Insertion problem
-			catch(ValidationException | SQLException e)
+			catch(ValidationException e)
 			{
 				throw new ProcessingException("Error processing post.", e);
+			}
+			
+			try {
+				int newId = dbPost.updatePost(postData);
+				success = (newId != 0);			
+			}
+			catch(SQLException e)
+			{
+				throw new ProcessingException("Error saving post.", e);
 			}
 		}
 		
 		return success;
 	}
 	
-	//====Blog====//
-
 	//====Blog====//
 	public BlogDO getBlog(int blogId)
 		throws ProcessingException {
@@ -219,16 +248,23 @@ public class ClogLogic {
 		
 		try {
 			blogData = dbBlog.getBlogById(blogId);
+		}
+		catch (SQLException e)
+		{
+			throw new ProcessingException("Error retrieving blog.", e);
+		}
+		
+		try {
 			blogDomain = blogDataToDomain(blogData);
 			cleanBlog = sanitizeBlog(blogDomain);
 		}
-		catch (SQLException | ValidationException e) {
+		catch (ValidationException e) {
 			throw new ProcessingException("Error processing blog.", e);
 		}
 		
 		return cleanBlog;
 	}
-	
+
 	public List<BlogDO> getBlogsByProfile(int profileId)
 			throws ProcessingException {
 		List<BlogDTO> blogsData = new ArrayList<BlogDTO>();
@@ -237,21 +273,26 @@ public class ClogLogic {
 		
 		try {
 			blogsData = dbBlog.getBlogsByProfileId(profileId);
+		}
+		catch (SQLException e)
+		{
+			throw new ProcessingException("Error retreiving blogs", e);
+		}
+		
+		try {
 			for(BlogDTO b : blogsData)
 			{				
 				blogsDomain.add(blogDataToDomain(b));
 			}
 			cleanBlogs = sanitizeBlogs(blogsDomain);
 		}
-		
-		catch (SQLException | ValidationException e)
+		catch (ValidationException e)
 		{
 			throw new ProcessingException("Error processing blogs.", e);
 		}
 		
 		return cleanBlogs;
 	}
-	
 	
 	public int insertBlog(BlogDO newBlog, ProfileDO user) 
 			throws InvalidInputException, AuthenticationException, ProcessingException {
@@ -290,13 +331,18 @@ public class ClogLogic {
 			try {
 				cleanBlog = sanitizeBlog(newBlog);
 				blogData = blogDomainToData(cleanBlog);
-				newId = dbBlog.insertBlog(blogData);
 			}
-			
-			//Insertion problem
-			catch(ValidationException | SQLException e)
+			catch(ValidationException e)
 			{
 				throw new ProcessingException("Error processing blog", e);
+			}
+			
+			try {
+				newId = dbBlog.insertBlog(blogData);
+			}
+			catch (SQLException e)
+			{
+				throw new ProcessingException("Error saving profile.", e);
 			}
 		}
 		
@@ -361,11 +407,18 @@ public class ClogLogic {
 		
 		try {
 			profileData = dbProfile.getProfileById(profileId);
+		}
+		catch (SQLException e)
+		{
+			throw new ProcessingException("Error retrieving profile.", e);
+		}
+		
+		try {
 			profileDomain = profileDataToDomain(profileData);
 			cleanProfile = sanitizeProfile(profileDomain);	
 		}
-		catch(SQLException | ValidationException e) {
-			throw new ProcessingException("Error processing Profile.", e);
+		catch(ValidationException e) {
+			throw new ProcessingException("Error processing profile.", e);
 		}
 		
 		return cleanProfile;
@@ -430,7 +483,7 @@ public class ClogLogic {
 			//Filtering | Insertion problem
 			catch(ValidationException| SQLException e) 
 			{
-					throw new InvalidInputException(e);
+				throw new InvalidInputException(e);
 			}
 		}
 				

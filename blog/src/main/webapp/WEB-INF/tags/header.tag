@@ -5,7 +5,7 @@
 	<%-- Login/My Page/Logout --%>
 	<c:if test="${not empty sessionScope.loggedInUser}">
 		<form style="float: right"  method="post" action="${pageContext.request.contextPath}/logout" class="inline">
-			Welcome, <a href="${pageContext.request.contextPath}/profile/me">${sessionScope.loggedInUser}</a>.
+			Welcome, <a href="${pageContext.request.contextPath}/profile/me">${sessionScope.loggedInUser.getName()}</a>.
 			<button type="submit" name="submit_param" value="submit_value" class="linkbutton">Logout</button>
 		</form>
 	</c:if>
