@@ -40,7 +40,6 @@ public class ClogLogic {
 	//GET: DATA -> DOMAIN -> CLEAN
 	//INSERT: DOMAIN -> CLEAN -> DATA
 	
-	
 	AppConfiguration config;
 	
 	//TODO: Set this here? Or allow the user to request a range with this as max?
@@ -66,6 +65,11 @@ public class ClogLogic {
 			throw new ProcessingException("Error retrieving post.", e);
 		}
 		
+		if (postData == null)
+		{
+			throw new ProcessingException("Post doesn't exist.");
+		}
+		
 		try {
 			postDomain = postDataToDomain(postData, dbBlog.getProfileIdByBlogId(postData.getBlogId()));			
 			cleanPost = sanitizePost(postDomain);
@@ -89,6 +93,11 @@ public class ClogLogic {
 		catch (SQLException e)
 		{
 			throw new ProcessingException("Error retrieving posts.", e);
+		}
+		
+		if (postsData.isEmpty())
+		{
+			throw new ProcessingException("Couldn't retrieve posts.");
 		}
 		
 		try {
@@ -117,6 +126,11 @@ public class ClogLogic {
 		catch (SQLException e)
 		{
 			throw new ProcessingException("Error retrieving profile.", e);
+		}
+		
+		if (postsData.isEmpty())
+		{
+			throw new ProcessingException("Couldn't retrieve posts.");
 		}
 		
 		try {
@@ -253,6 +267,11 @@ public class ClogLogic {
 		{
 			throw new ProcessingException("Error retrieving blog.", e);
 		}
+
+		if (blogData == null)
+		{
+			throw new ProcessingException("Blog doesn't exist.");
+		}
 		
 		try {
 			blogDomain = blogDataToDomain(blogData);
@@ -277,6 +296,11 @@ public class ClogLogic {
 		catch (SQLException e)
 		{
 			throw new ProcessingException("Error retreiving blogs", e);
+		}
+		
+		if (blogsData.isEmpty())
+		{
+			throw new ProcessingException("Couldn't retrieve blogs.");
 		}
 		
 		try {
@@ -411,6 +435,11 @@ public class ClogLogic {
 		catch (SQLException e)
 		{
 			throw new ProcessingException("Error retrieving profile.", e);
+		}
+		
+		if (profileData == null)
+		{
+			throw new ProcessingException("Profile doesn't exist.");
 		}
 		
 		try {

@@ -3,6 +3,6 @@
 <%@attribute name="blogs" required="true" type="java.util.List"%>
 
 <c:forEach items="${blogs}" var="blog">
-	<t:postView post="${blog}"/>
+	<t:blogView blog="${blog}"/>
 	<br/><br/>
 </c:forEach>

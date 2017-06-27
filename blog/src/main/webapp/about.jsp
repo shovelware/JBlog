@@ -11,22 +11,22 @@
 	<br/>For security we have XSS prevention and SQL injection protection.
 	
 	<br/>
+	
 	<table>
 	<tr><td>===</td></tr>
-	<tr><td>TODO: Finish writing SQL interfaces</td></tr>
-	<tr><td>TODO: Make SQL interfaces airtight</td></tr>
-	<tr><td>TODO: Maybe actually rewrite DAO system?</td></tr>
-	<tr><td>===</td></tr>
-	<tr><td>TODO: Add Biz layer</td></tr>
-	<tr><td>===</td></tr>
-	<tr><td>TODO: Add unit tests of all sorts</td></tr>
-	<tr><td>===</td></tr>
-	<tr><td>TODO: Investigate removing the /blog/ suffix from everything (WebApp root?)</td></tr>
+	<tr><td>TODO: ViewProfile is POST, we get that resend message when refreshing.</td></tr>
 	<tr><td>===</td></tr>
 	<tr><td>TODO: Finish implementing blog and profile editing</td></tr>
 	<tr><td>===</td></tr>
+	<tr><td>TODO: Unit Test SQL interfaces</td></tr>
+	<tr><td>===</td></tr>
+	<tr><td>TODO: Finish Implementing/Unit Test Biz layer</td></tr>
+	<tr><td>===</td></tr>
+	<tr><td>TODO: Investigate removing the /blog/ suffix from everything (WebApp root?)</td></tr>
+	<tr><td>===</td></tr>
 	<tr><td>TODO: Implement Pictures in posts and SQL (How tho?)</td></tr>
 	<tr><td>===</td></tr>
+	
 	</table>
 	</div>
 </jsp:body>

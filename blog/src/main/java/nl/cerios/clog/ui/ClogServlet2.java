@@ -8,7 +8,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -18,7 +17,6 @@ import javax.servlet.http.HttpSession;
 
 import nl.cerios.clog.business.AppConfiguration;
 import nl.cerios.clog.business.ClogLogic;
-import nl.cerios.clog.database.Authenticator;
 import nl.cerios.clog.domain.BlogDO;
 import nl.cerios.clog.domain.PostDO;
 import nl.cerios.clog.domain.ProfileDO;
@@ -29,7 +27,9 @@ import nl.cerios.clog.exception.ProcessingException;
 
 import org.yaml.snakeyaml.Yaml;
 
-import org.owasp.esapi.ESAPI;
+//To go to business
+import nl.cerios.clog.database.Authenticator;
+import nl.cerios.clog.database.ConnectionFactory;
 
 public class ClogServlet2 extends HttpServlet{
 	private static final long serialVersionUID = 1434964914372365428L;
@@ -64,7 +64,8 @@ public class ClogServlet2 extends HttpServlet{
 			InputStream input = new FileInputStream(yamlConfig);				
 			AppConfiguration appConfig = yaml.loadAs(input,  AppConfiguration.class);
 			input.close();
-				
+			
+			ConnectionFactory.getInstance().init(appConfig);
 			business.init(appConfig);
 		}
 		catch(Exception e){
@@ -197,7 +198,6 @@ public class ClogServlet2 extends HttpServlet{
 		}
 		
 		showLoggedInProfile(request, response);
-		return;
 	}
 
     //Automatic for now, this is useless [evt. db interaction]
@@ -221,23 +221,24 @@ public class ClogServlet2 extends HttpServlet{
 		ProfileDO profile = new ProfileDO(0, username, motto, LocalDateTime.now());
 		int newProfileId = 0;
 		
-			try {
-				newProfileId = business.insertProfile(profile,  password);
-				BlogDO newBlog = new BlogDO(0, newProfileId, "Blog " + username, username + "'s blog");
-				business.insertBlog(newBlog, profile);
-			}
-			catch (InvalidInputException | ProcessingException | AuthenticationException e) {
-				showError(request, response, ErrorCode.SERVER, e.getMessage());
-				return;
-			}
+		try {
+			newProfileId = business.insertProfile(profile,  password);
+			BlogDO newBlog = new BlogDO(0, newProfileId, "Blog " + username, username + "'s blog");
+			business.insertBlog(newBlog, profile);
+		}
+		catch (InvalidInputException | ProcessingException | AuthenticationException e) {
+			showError(request, response, ErrorCode.SERVER, e.getMessage());
+			return;
+		}
 		
 		boolean authenticated = tempAuth.AuthenticateUser(username, password);
 
 		if (authenticated) {
 			request.getSession().setAttribute("loggedInUser", profile);
 			showLoggedInProfile(request, response);
-			return;
 		}
+		
+		else showError(request, response, ErrorCode.SERVER, "Something went wrong. :(");
 	}
 	
 	//TODO: Remove
@@ -355,7 +356,6 @@ public class ClogServlet2 extends HttpServlet{
 		else {
 			request.setAttribute("errorMessage", "Login Failed, please try again");
 			showLogin(request, response);
-			return;
 		}
 	}
 	
@@ -363,7 +363,6 @@ public class ClogServlet2 extends HttpServlet{
 			throws ServletException, IOException {
 		request.getSession().removeAttribute("loggedInUser");
 		showIndex(request, response);
-		return;
 	}
 
     //Admin stuff [POST]
@@ -395,7 +394,6 @@ public class ClogServlet2 extends HttpServlet{
 		request.setAttribute("profileId", profileId);
 		request.setAttribute("blogs", blogs);
 		getServletContext().getRequestDispatcher("/postNew.jsp").forward(request, response);
-		return;
 	}
 	
     protected void showNewBlogForm(HttpServletRequest request, HttpServletResponse response)
@@ -424,7 +422,6 @@ public class ClogServlet2 extends HttpServlet{
 
 		else {
 			showLoggedInProfile(request, response);
-			return;
 			}
 	}
 	
@@ -513,32 +510,27 @@ public class ClogServlet2 extends HttpServlet{
 	protected void showFindPostForm(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		getServletContext().getRequestDispatcher("/postFind.jsp").forward(request, response);
-		return;
 	}
 	
 	protected void showFindBlogForm(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		getServletContext().getRequestDispatcher("/blogFind.jsp").forward(request, response);
-		return;
 	}
 	
 	protected void showFindProfileForm(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		getServletContext().getRequestDispatcher("/profileFind.jsp").forward(request, response);
-		return;
 	}
 	
     ////Generic pages
 	protected void showIndex(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
     	getServletContext().getRequestDispatcher("/index.jsp").forward(request, response);
-    	return;
     }
 	
 	protected void showAbout(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		getServletContext().getRequestDispatcher("/about.jsp").forward(request, response);
-		return;
 	}
 	
 	protected void showLogin(HttpServletRequest request, HttpServletResponse response)
@@ -547,37 +539,77 @@ public class ClogServlet2 extends HttpServlet{
 		return;
 	}
 	
-	protected void showRecentPosts(HttpServletRequest request, HttpServletResponse response)
+	//Data pages
+	protected void showProfile(HttpServletRequest request, HttpServletResponse response, int profileId)
 			throws ServletException, IOException {
-		List<PostDO> posts = new ArrayList<PostDO>();
-		
+		if (profileId <= 0)
+		{
+			showError(request, response, ErrorCode.SERVER, "Malformed profile ID.");
+			return;
+		}
+	
+		ProfileDO profile = null;
+		List<BlogDO> blogs = new ArrayList<BlogDO>();
+			
 		try {
-			posts = business.getPostsRecent(MAGICPOSTNUMBER);
-			request.setAttribute("posts", posts);
+			profile = business.getProfile(profileId);
 		}
 		catch (ProcessingException e)
 		{
 			showError(request, response, ErrorCode.SERVER, e.getMessage());
 			return;
 		}
-
-		getServletContext().getRequestDispatcher("/postRecent.jsp").forward(request, response);
-		return;
-	}
-
-	//Show Post by ID [PARSES URI]
-	protected void showPostById(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
-		int postId = 0;
 		
 		try {
-			postId = java.lang.Integer.parseInt(request.getParameter("id"));
+			blogs =  business.getBlogsByProfile(profileId);
 		}
-		catch (NumberFormatException e) {
-			showError(request, response, ErrorCode.SERVER, "Malformed post ID.");
+		catch (ProcessingException e) {
+			//Not a failure state but we need to handle the exception
+			System.out.println(e.getMessage());
+		}
+			
+		request.setAttribute("profile", profile);
+		request.setAttribute("blogs", blogs);
+		getServletContext().getRequestDispatcher("/profileView.jsp").forward(request, response);
+	}
+	
+	protected void showBlog(HttpServletRequest request, HttpServletResponse response, int blogId)
+			throws ServletException, IOException {
+		if (blogId <= 0)
+		{
+			showError(request, response, ErrorCode.SERVER, "Malformed blog ID.");
 			return;
 		}
+		
+		BlogDO blog = null;
+		List<PostDO> posts = new ArrayList<PostDO>();
+		
+		try{
+			blog = business.getBlog(blogId);
+		}
+		
+		catch(ProcessingException e)
+		{
+			showError(request, response, ErrorCode.SERVER, e.getMessage());
+			return;
+		}
+		
 
+		try {
+			posts = business.getPostsByBlog(blogId, MAGICPOSTNUMBER);
+		}
+		catch (ProcessingException e) {
+			//Not a failure state but we need to handle the exception
+			System.out.println(e.getMessage());
+		}
+
+		request.setAttribute("blog", blog);
+		request.setAttribute("posts", posts);
+		getServletContext().getRequestDispatcher("/blogView.jsp").forward(request, response);
+	}	
+	
+	protected void showPost(HttpServletRequest request, HttpServletResponse response, int postId)
+			throws ServletException, IOException {
 		if (postId <= 0)
 		{
 			showError(request, response, ErrorCode.SERVER, "Malformed post ID.");
@@ -597,7 +629,40 @@ public class ClogServlet2 extends HttpServlet{
 			
 		request.setAttribute("post", post);
 		getServletContext().getRequestDispatcher("/postView.jsp").forward(request, response);
-		return;
+	}
+	
+	//Data pages with special lookups
+	protected void showRecentPosts(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		List<PostDO> posts = new ArrayList<PostDO>();
+		
+		try {
+			posts = business.getPostsRecent(MAGICPOSTNUMBER);
+			request.setAttribute("posts", posts);
+		}
+		catch (ProcessingException e)
+		{
+			showError(request, response, ErrorCode.SERVER, e.getMessage());
+			return;
+		}
+
+		getServletContext().getRequestDispatcher("/postRecent.jsp").forward(request, response);
+	}
+
+	//Show Post by ID [PARSES URI]
+	protected void showPostById(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		int postId = 0;
+		
+		try {
+			postId = java.lang.Integer.parseInt(request.getParameter("id"));
+		}
+		catch (NumberFormatException e) {
+			showError(request, response, ErrorCode.SERVER, "Malformed post ID.");
+			return;
+		}
+		
+		showPost(request, response, postId);
 	}
 	
 	//Show Blog by ID [PARSES URI]
@@ -613,72 +678,25 @@ public class ClogServlet2 extends HttpServlet{
 			return;
 		}
 
-		if (blogId <= 0)
-		{
-			showError(request, response, ErrorCode.SERVER, "Malformed blog ID.");
-			return;
-		}
-		
-		BlogDO blog = null;
-		List<PostDO> posts = new ArrayList<PostDO>();
-		
-		try{
-			blog = business.getBlog(blogId);
-			posts = business.getPostsByBlog(blogId, MAGICPOSTNUMBER);
-		}
-		
-		catch(ProcessingException e)
-		{
-			showError(request, response, ErrorCode.SERVER, e.getMessage());
-			return;
-		}
-
-		request.setAttribute("blog", blog);
-		request.setAttribute("posts", posts);
-		getServletContext().getRequestDispatcher("/blogView.jsp").forward(request, response);
-		return;
+		showBlog(request, response, blogId);
 	}
     
     //Show Profile by ID [PARSES URI]
     protected void showProfileById(HttpServletRequest request, HttpServletResponse response)
-    	throws ServletException, IOException {
-    		int profileId = 0;
-    		
-    		try {
-    			profileId = java.lang.Integer.parseInt(request.getParameter("id"));
-    		}
-    		catch (NumberFormatException e) {
-    			showError(request, response, ErrorCode.SERVER, "Malformed profile ID.");
-    			return;
-    		}
-    	
-    		if (profileId <= 0)
-    		{
-    			showError(request, response, ErrorCode.SERVER, "Malformed profile ID.");
-    			return;
-    		}
-    	
-    		ProfileDO profile = null;
-    		List<BlogDO> blogs = new ArrayList<BlogDO>();
-    			
-    		try {
-    			profile = business.getProfile(profileId);
-    			blogs =  business.getBlogsByProfile(profileId);
-    		}
-    		catch (ProcessingException e)
-    		{
-				showError(request, response, ErrorCode.SERVER, e.getMessage());
-				return;
-    		}
-    		
-    		request.setAttribute("profile", profile);
-    		request.setAttribute("blog", blogs);
-    		getServletContext().getRequestDispatcher("/profileView.jsp").forward(request, response);
+    		throws ServletException, IOException {
+    	int profileId = 0;
+    	try {
+    	profileId = java.lang.Integer.parseInt(request.getParameter("id"));
+    	}
+    	catch (NumberFormatException e) {
+    		showError(request, response, ErrorCode.SERVER, "Malformed profile ID.");
     		return;
+    	}
+    	
+    	showProfile(request, response, profileId);
     }
     
     //[PARSES SESSION] //Shows logged in profile or error
-   
     protected void showLoggedInProfile(HttpServletRequest request, HttpServletResponse response)
         	throws ServletException, IOException {
     	if (!checkLoggedIn(request.getSession()))
@@ -688,23 +706,10 @@ public class ClogServlet2 extends HttpServlet{
     	}
     	
 		int	profileId = 0;
-		ProfileDO profile = null;
-		List<BlogDO> blogs = new ArrayList<BlogDO>();
 		
-		try {
-			profileId = getLoggedInId(request.getSession());
-			profile = business.getProfile(profileId);
-			blogs = business.getBlogsByProfile(profileId);
-		}
-		catch (ProcessingException e) {
-			showError(request, response, ErrorCode.SERVER, e.getMessage());
-			return;
-		}
+		profileId = getLoggedInId(request.getSession());
 		
-		request.setAttribute("profile", profile);
-    	request.setAttribute("blogs", blogs);	
-		getServletContext().getRequestDispatcher("/profileView.jsp").forward(request, response);
-		return;
+		showProfile(request, response, profileId);
 	}
     
     ////Errors
@@ -745,7 +750,6 @@ public class ClogServlet2 extends HttpServlet{
     	return user;
     }
     
-
     //[PARSES SESSION] Gets the ID of the currently logged in user, or 0 if nobody's logged in
     protected int getLoggedInId(HttpSession session)
     {
@@ -760,7 +764,6 @@ public class ClogServlet2 extends HttpServlet{
     	return id;
     }
 
-
     //[PARSES SESSION] Returns true if logged in
     protected boolean checkLoggedIn(HttpSession session)
     {
@@ -774,7 +777,6 @@ public class ClogServlet2 extends HttpServlet{
 		return loggedIn;
     }
     
-    
     //[PARSES SESSION]
     protected boolean checkAdmin(HttpSession session)
     {
@@ -787,5 +789,4 @@ public class ClogServlet2 extends HttpServlet{
     	
     	return admin;
     }
-
 }
