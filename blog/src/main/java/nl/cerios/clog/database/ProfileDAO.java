@@ -1,17 +1,11 @@
 package nl.cerios.clog.database;
 
-import java.time.LocalDateTime;
-import java.util.List;
+import java.sql.SQLException;
 
 public interface ProfileDAO {
-	ProfileDTO getProfileById(int profileId);
-	List<ProfileDTO> getProfileByPostId(int postId);
-	List<ProfileDTO> getProfileByBlogId(int blogId);
+	ProfileDO getProfileById(int profileId) throws SQLException;
 	
-	List<ProfileDTO> getProfileByName(String name);
-	List<ProfileDTO> getProfileByTimestamp(LocalDateTime since, int count);
-	
-	boolean InsertProfile(ProfileDTO newProfile);
-	boolean UpdateProfile(ProfileDTO updatedProfile);	
-	boolean DeleteProfile(int ProfileId);
+	int insertProfile(ProfileDO newProfile) throws SQLException;
+	int updateProfile(ProfileDO updatedProfile) throws SQLException;	
+	boolean deleteProfile(int profileId) throws SQLException;
 }

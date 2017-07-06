@@ -5,19 +5,21 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+
 public class PostDAOSQL implements PostDAO {
 
 	@Override
-	public PostDTO getPostById(int postId) {
-
+	public PostDO getPostById(int postId)
+		throws SQLException {
 		Connection connection = null;
 		PreparedStatement statement = null;
 		ResultSet resultSet = null;
-		PostDTO post = null;
+		PostDO post = null;
 
 		try {
 			connection = ConnectionFactory.getInstance().getConnection();
@@ -28,35 +30,24 @@ public class PostDAOSQL implements PostDAO {
 					);
 
 			statement.setInt(1, postId);
-
 			resultSet = statement.executeQuery();
+			
 			post = GetFromResultSet(resultSet);
-
-		} catch (SQLException e) {
-			throw new IllegalStateException(e);
 		}
-
 		finally {
 			Close(connection, statement, resultSet);
 		}
+		
 		return post;
 	}
 
-	//Unimplemented
 	@Override
-	public List<PostDTO> getPostByAuthorId(int authorId) {
-		// TODO Auto-generated method stub
-		//How to get from profileid through blog to post
-		//Or posts should know their author probably?
-		return null;
-	}
-
-	@Override
-	public List<PostDTO> getPostByBlogId(int blogId) {
+	public List<PostDO> getPostsByBlogId(int blogId, int count)
+			throws SQLException {
 		Connection connection = null;
 		PreparedStatement statement = null;
 		ResultSet resultSet = null;
-		List<PostDTO> posts = new ArrayList<PostDTO>();
+		List<PostDO> posts = new ArrayList<PostDO>();
 
 		try {
 			connection = ConnectionFactory.getInstance().getConnection();
@@ -64,118 +55,121 @@ public class PostDAOSQL implements PostDAO {
 			statement = connection.prepareStatement(
 					"SELECT * FROM post" +
 					" WHERE blog_id=?" +
-					" ORDER BY TIMESTAMP DESC"
+					" ORDER BY timestamp DESC" +
+					" LIMIT ?"
 					);
 
 			statement.setInt(1, blogId);
-
+			statement.setInt(2,  count);
 			resultSet = statement.executeQuery();
+			
 			posts = PopulateFromResultSet(resultSet);
-
-		} catch (SQLException e) {
-			throw new IllegalStateException(e);
 		}
-
 		finally {
 			Close(connection, statement, resultSet);
 		}
+		
 		return posts;
 	}
 
-	//Headers are for later
 	@Override
-	public PostDTO getPostHeaderById(int postId) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	
-	//Headers are for later
-	@Override
-	public List<PostDTO> getPostHeaderByAuthorId(int authorId) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	//Headers are for later
-	@Override
-	public List<PostDTO> getPostHeaderByBlogId(int blogId) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public List<PostDTO> getPostByTimestamp(LocalDateTime since, int count) {
-
-		// !Since does not do anything yet! (From/To maybe?)
-
-		// Variables
+	public List<PostDO> getPostsSinceTimestamp(LocalDateTime since, int count)
+			throws SQLException {
 		Connection connection = null;
 		PreparedStatement statement = null;
 		ResultSet resultSet = null;
-		List<PostDTO> posts = new ArrayList<PostDTO>();
+		List<PostDO> posts = new ArrayList<PostDO>();
 
 		try {
 			connection = ConnectionFactory.getInstance().getConnection();
 
 			statement = connection.prepareStatement(
 					"SELECT * FROM post" +
-					" ORDER BY TIMESTAMP DESC" +
+					" WHERE timestamp >= ?" +
+					" ORDER BY timestamp DESC" +
+					" LIMIT ?"
+					);
+
+			statement.setTimestamp(1, Timestamp.valueOf(since));
+			statement.setInt(2, count);
+			resultSet = statement.executeQuery();
+
+			posts = PopulateFromResultSet(resultSet);
+		}
+		finally {
+			Close(connection, statement, resultSet);			
+		}
+		
+		return posts;
+	}
+
+	public List<PostDO> getPostsRecent(int count)
+			throws SQLException {
+		Connection connection = null;
+		PreparedStatement statement = null;
+		ResultSet resultSet = null;
+		List<PostDO> posts = new ArrayList<PostDO>();
+
+		try {
+			connection = ConnectionFactory.getInstance().getConnection();
+
+			statement = connection.prepareStatement(
+					"SELECT * FROM post" +
+					" ORDER BY timestamp DESC" +
 					" LIMIT ?"
 					);
 
 			statement.setInt(1, count);
-
 			resultSet = statement.executeQuery();
 
 			posts = PopulateFromResultSet(resultSet);
-		} catch (SQLException e) {
-			throw new IllegalStateException(e);
 		}
-
 		finally {
 			Close(connection, statement, resultSet);			
 		}
+		
 		return posts;
 	}
-
+	
 	@Override
-	public boolean InsertPost(PostDTO newPost) {
-
+	public int insertPost(PostDO newPost)
+			throws SQLException {
 		Connection connection = null;
 		PreparedStatement statement = null;
-		boolean success = false;
+		ResultSet resultSet = null;
+		int newPostId = 0;
 
 		try {
 			connection = ConnectionFactory.getInstance().getConnection();
 			statement = connection.prepareStatement(
 					"INSERT INTO post (title, text, blog_id)" +
-					" VALUES (?, ?, ?);"
+					" VALUES (?, ?, ?);", Statement.RETURN_GENERATED_KEYS
 					);
 			
 			statement.setString(1, newPost.getTitle());
 			statement.setString(2, newPost.getText());
 			statement.setInt(3, newPost.getBlogId());
-			
 			statement.executeUpdate();
-			
-			success = true;
 
-		} catch (SQLException e) {
-			throw new IllegalStateException(e);
+			resultSet = statement.getGeneratedKeys();
+			if (resultSet.next()) {
+			  newPostId = resultSet.getInt(1);
+			}
+		}
+		finally {
+			Close(connection, statement, resultSet);
 		}
 		
-		finally {
-			Close(connection, statement, null);
-		}
-		return success;
+		return newPostId;
 	}
 
-	//Updating comes later
 	@Override
-	public boolean UpdatePost(PostDTO updatedPost) {
+	public int updatePost(PostDO updatedPost)
+			throws SQLException {
 		Connection connection = null;
 		PreparedStatement statement = null;
-		boolean success = false;
+		ResultSet resultSet = null;
+		int updatedPostId = 0;
 
 		try {
 			connection = ConnectionFactory.getInstance().getConnection();
@@ -188,83 +182,89 @@ public class PostDAOSQL implements PostDAO {
 			statement.setString(1, updatedPost.getTitle());
 			statement.setString(2, updatedPost.getText());
 			statement.setInt(3, updatedPost.getId());
-
-			System.out.println(statement.toString());
 			
 			statement.executeUpdate();
 			
-			///Return post id
-			ResultSet rs = statement.getGeneratedKeys();
-			if (rs.next()) {
-			  int newPostId = rs.getInt(1);
+			resultSet = statement.getGeneratedKeys();
+			if (resultSet.next()) {
+			  updatedPostId = resultSet.getInt(1);
 			}
-			
-			success = true;
-
-		} catch (SQLException e) {
-			throw new IllegalStateException(e);
+		}
+		finally {
+			Close(connection, statement, resultSet);
 		}
 		
+		return updatedPostId;
+	}
+
+	@Override
+	public boolean deletePost(int postId)
+			throws SQLException {
+		Connection connection = null;
+		PreparedStatement statement = null;
+		boolean success = false;
+		
+		try {
+			connection = ConnectionFactory.getInstance().getConnection();
+			statement = connection.prepareStatement(
+					"DELETE FROM post " +
+					" WHERE id = ?"
+					);
+			
+			statement.setInt(1, postId);
+			
+
+			int affectedRows = statement.executeUpdate();
+			success = (affectedRows == 1);
+		}
 		finally {
 			Close(connection, statement, null);
 		}
+		
 		return success;
 	}
-
-	//Deleting comes later
-	@Override
-	public boolean DeletePost(int postId) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	private List<PostDTO> PopulateFromResultSet(ResultSet resultSet) {
+	
+	private PostDO GetFromResultSet(ResultSet resultSet)
+			throws SQLException	{
+		PostDO post = null;
 		
-		List<PostDTO> posts = new ArrayList<PostDTO>();
-		
-		//Convert each resultSet row to a PostDTO
-		try {
-			while (resultSet.next()) {
-				PostDTO p = new PostDTO(
-						resultSet.getInt("id"),
-						resultSet.getInt("blog_id"),
-						resultSet.getTimestamp("timestamp").toLocalDateTime(),
-						resultSet.getString("title"),
-						resultSet.getString("text"));
-
-				posts.add(p);
-			}
-		} catch (SQLException e) {
-			throw new IllegalStateException(e);
-		}
-		
-		return posts;
-	}
-
-	//Takes the first result from the set and returns it as a DTO
-	private PostDTO GetFromResultSet(ResultSet resultSet)
-	{
-		PostDTO post = null;
-		
-		try {
-			if (resultSet.next()) {
-				post = new PostDTO(
-						resultSet.getInt("id"),
-						resultSet.getInt("blog_id"),
-						resultSet.getTimestamp("timestamp").toLocalDateTime(),
-						resultSet.getString("title"),
-						resultSet.getString("text"));
-			}
-		} catch (SQLException e) {
-			throw new IllegalStateException(e);
+		if (resultSet.next()) {
+			post = new PostDO(
+				resultSet.getInt("id"),
+				resultSet.getInt("blog_id"),
+				resultSet.getTimestamp("timestamp").toLocalDateTime(),
+				resultSet.getString("title"),
+				resultSet.getString("text"));
 		}
 		
 		return post;
 	}
 	
-	private void Close(Connection connection, PreparedStatement statement, ResultSet resultSet) {
-		try { if (resultSet != null) resultSet.close(); } catch (Exception e) {};
-		try { if (statement != null) statement.close(); } catch (Exception e) {};
-		try { if (connection != null) connection.close(); } catch (Exception e) {};
+	private List<PostDO> PopulateFromResultSet(ResultSet resultSet)
+			throws SQLException {
+		
+		List<PostDO> posts = new ArrayList<PostDO>();
+		
+		
+		//Convert each resultSet row to a PostDTO
+		while (resultSet.next()) {
+			PostDO p = new PostDO(
+				resultSet.getInt("id"),
+				resultSet.getInt("blog_id"),
+				resultSet.getTimestamp("timestamp").toLocalDateTime(),
+				resultSet.getString("title"),
+				resultSet.getString("text"));
+			posts.add(p);
+		}
+			
+		return posts;
+	}
+
+	private void Close(Connection connection, PreparedStatement statement, ResultSet resultSet)
+			throws SQLException {
+		if (resultSet != null) { resultSet.close(); }
+		if (statement != null) { statement.close(); }
+		if (connection != null) { connection.close(); }
 	}
 }
+

@@ -1,5 +1,5 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
-<%@attribute name="profile" required="true" type="nl.cerios.clog.database.ProfileDTO"%>
+<%@attribute name="profile" required="true" type="nl.cerios.clog.object.ProfileDTO"%>
 
 <%-- Edit motto, username? password? --%>
 

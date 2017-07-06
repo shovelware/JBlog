@@ -4,18 +4,20 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.mysql.jdbc.Statement;
 
 public class ProfileDAOSQL implements ProfileDAO {
 
 	@Override
-	public ProfileDTO getProfileById(int profileId) {
+	public ProfileDO getProfileById(int profileId)
+			throws SQLException {
 		Connection connection = null;
 		PreparedStatement statement = null;
 		ResultSet resultSet = null;
-		ProfileDTO profile = null;
+		ProfileDO profile = null;
 
 		try {
 			connection = ConnectionFactory.getInstance().getConnection();
@@ -30,36 +32,20 @@ public class ProfileDAOSQL implements ProfileDAO {
 			resultSet = statement.executeQuery();
 
 			profile = GetFromResultSet(resultSet);
-		} catch (SQLException e) {
-			throw new IllegalStateException(e);
-		}
-		
+		}		
 		finally { 
 			Close(connection, statement, resultSet); 
-			}
+		}
+		
 		return profile;
 	}
-
-	//Unimplemented
-	@Override
-	public List<ProfileDTO> getProfileByPostId(int postId) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	//Unimplemented
-	@Override
-	public List<ProfileDTO> getProfileByBlogId(int blogId) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public List<ProfileDTO> getProfileByName(String name) {
+	
+	public ProfileDO getProfileByName(String profileName)
+			throws SQLException {
 		Connection connection = null;
 		PreparedStatement statement = null;
 		ResultSet resultSet = null;
-		List<ProfileDTO> profiles = new ArrayList<ProfileDTO>();
+		ProfileDO profile = null;
 
 		try {
 			connection = ConnectionFactory.getInstance().getConnection();
@@ -69,143 +55,146 @@ public class ProfileDAOSQL implements ProfileDAO {
 					" WHERE name=?"
 					);
 
-			statement.setString(1, name);
+			statement.setString(1, profileName);
 
 			resultSet = statement.executeQuery();
-			profiles = PopulateFromResultSet(resultSet);
 
-		} catch (SQLException e) {
-			throw new IllegalStateException(e);
+			profile = GetFromResultSet(resultSet);
+		}		
+		finally { 
+			Close(connection, statement, resultSet); 
 		}
-
-		finally {
-			Close(connection, statement, resultSet);
-		}
-		return profiles;
-	}
-
-	//Unimplemented (Needed?)
-	@Override
-	public List<ProfileDTO> getProfileByTimestamp(LocalDateTime since, int count) {
-		// TODO Auto-generated method stub
-		return null;
+		
+		return profile;
 	}
 
 	@Override
-	public boolean InsertProfile(ProfileDTO newProfile) {
-
+	public int insertProfile(ProfileDO newProfile)
+			throws SQLException {
 		Connection connection = null;
 		PreparedStatement statement = null;
-		boolean success = false;
+		ResultSet resultSet = null;
+		int newProfileId = 0;
 
 		try {
 			connection = ConnectionFactory.getInstance().getConnection();
 			statement = connection.prepareStatement(
 					"INSERT INTO profile (name, motto)" +
-					" VALUES (?, ?);"
+					" VALUES (?, ?);", Statement.RETURN_GENERATED_KEYS
 					);
 			
 			statement.setString(1, newProfile.getName());
 			statement.setString(2, newProfile.getMotto());
 
 			statement.executeUpdate();
-			
-			success = true;
 
-		} catch (SQLException e) {
-			throw new IllegalStateException(e);
+			resultSet = statement.getGeneratedKeys();
+			if (resultSet.next()) {
+			  newProfileId = resultSet.getInt(1);
+			}
 		}
 		finally {
 			Close(connection, statement, null);
 		}
+		
+		return newProfileId;
+	}
+
+	@Override
+	public int updateProfile(ProfileDO updatedProfile)
+			throws SQLException {
+		Connection connection = null;
+		PreparedStatement statement = null;
+		ResultSet resultSet = null;
+		int updatedProfileId = 0;
+
+		try {
+			connection = ConnectionFactory.getInstance().getConnection();
+			statement = connection.prepareStatement(
+					"UPDATE profile " +
+					" SET motto = ?" + 
+					" WHERE id = ?"
+					);
+			
+			statement.setString(1, updatedProfile.getMotto());
+			statement.setInt(2, updatedProfile.getId());
+
+			statement.executeUpdate();
+
+			resultSet = statement.getGeneratedKeys();
+			if (resultSet.next()) {
+			  updatedProfileId = resultSet.getInt(1);
+			}
+		}
+		finally {
+			Close(connection, statement, null);
+		}
+		
+		return updatedProfileId;
+	}
+
+	@Override
+	public boolean deleteProfile(int profileId)
+			throws SQLException {
+		Connection connection = null;
+		PreparedStatement statement = null;
+		boolean success = false;
+		
+		try {
+			connection = ConnectionFactory.getInstance().getConnection();
+			statement = connection.prepareStatement(
+					"DELETE FROM profile " +
+					" WHERE id = ?"
+					);
+			
+			statement.setInt(1, profileId);
+
+			int affectedRows = statement.executeUpdate();
+			success = (affectedRows == 1);
+		}
+		finally {
+			Close(connection, statement, null);
+		}
+		
 		return success;
 	}
-
-	//Updating comes later
-	@Override
-	public boolean UpdateProfile(ProfileDTO updatedProfile) {		
-		Connection connection = null;
-	PreparedStatement statement = null;
-	boolean success = false;
-
-	try {
-		connection = ConnectionFactory.getInstance().getConnection();
-		statement = connection.prepareStatement(
-				"UPDATE profile " +
-				" SET motto = ?" + 
-				" WHERE id = ?"
-				);
-		
-		statement.setString(1, updatedProfile.getMotto());
-		statement.setInt(2, updatedProfile.getId());
-		
-		statement.executeUpdate();
-		
-		success = true;
-
-	} catch (SQLException e) {
-		throw new IllegalStateException(e);
-	}
 	
-	finally {
-		Close(connection, statement, null);
-	}
-	return success;
-	}
-
-	//Deleting comes later
-	@Override
-	public boolean DeleteProfile(int ProfileId) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-	
-	private List<ProfileDTO> PopulateFromResultSet(ResultSet resultSet) {
+	private List<ProfileDO> PopulateFromResultSet(ResultSet resultSet)
+			throws SQLException {
+		List<ProfileDO> profiles = new ArrayList<ProfileDO>();
 		
-		List<ProfileDTO> profiles = new ArrayList<ProfileDTO>();
-		
-		//Convert each resultSet row to a PostDTO
-		try {
-			while (resultSet.next()) {
-				ProfileDTO p = new ProfileDTO(
-						resultSet.getInt("id"),
-						resultSet.getString("name"),
-						resultSet.getString("motto"),
-						resultSet.getTimestamp("joindate").toLocalDateTime());
+		while (resultSet.next()) {
+			ProfileDO p = new ProfileDO(
+					resultSet.getInt("id"),
+					resultSet.getString("name"),
+					resultSet.getString("motto"),
+					resultSet.getTimestamp("joindate").toLocalDateTime());
 
-				profiles.add(p);
-			}
-		} catch (SQLException e) {
-			throw new IllegalStateException(e);
+			profiles.add(p);
 		}
 		
 		return profiles;
 	}
 
-	private ProfileDTO GetFromResultSet(ResultSet resultSet) {
+	private ProfileDO GetFromResultSet(ResultSet resultSet)
+			throws SQLException {
+		ProfileDO profile = null;
 		
-		ProfileDTO profile = null;
-		
-		//Convert each resultSet row to a PostDTO
-		try {
-			while (resultSet.next()) {
-				profile = new ProfileDTO(
-						resultSet.getInt("id"),
-						resultSet.getString("name"),
-						resultSet.getString("motto"),
-						resultSet.getTimestamp("joindate").toLocalDateTime());
-			}
-		} catch (SQLException e) {
-			throw new IllegalStateException(e);
+		while (resultSet.next()) {
+			profile = new ProfileDO(
+					resultSet.getInt("id"),
+					resultSet.getString("name"),
+					resultSet.getString("motto"),
+					resultSet.getTimestamp("joindate").toLocalDateTime());
 		}
 		
 		return profile;
 	}
 
-	private void Close(Connection connection, PreparedStatement statement, ResultSet resultSet) {
-		try { if (resultSet != null) resultSet.close(); } catch (Exception e) {};
-		try { if (statement != null) statement.close(); } catch (Exception e) {};
-		try { if (connection != null) connection.close(); } catch (Exception e) {};
+	private void Close(Connection connection, PreparedStatement statement, ResultSet resultSet)
+			throws SQLException {
+		if (resultSet != null) { resultSet.close(); }
+		if (statement != null) { statement.close(); }
+		if (connection != null) { connection.close(); }
 	}
-
 }

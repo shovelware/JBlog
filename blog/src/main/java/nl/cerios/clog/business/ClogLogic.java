@@ -2,40 +2,48 @@ package nl.cerios.clog.business;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Arrays;
 
-import nl.cerios.clog.database.v2.ConnectionFactory;
-import nl.cerios.clog.database.v2.PostDAOSQL;
-import nl.cerios.clog.database.v2.BlogDAOSQL;
-import nl.cerios.clog.database.v2.ProfileDAOSQL;
-import nl.cerios.clog.database.Authenticator;
-
-import nl.cerios.clog.database.v2.PostDTO;
-import nl.cerios.clog.database.v2.BlogDTO;
-import nl.cerios.clog.database.v2.ProfileDTO;
-
-import nl.cerios.clog.domain.PostDO;
-import nl.cerios.clog.domain.BlogDO;
-import nl.cerios.clog.domain.ProfileDO;
+import nl.cerios.clog.database.ConnectionFactory;
+import nl.cerios.clog.database.AuthDAOSQL;
+import nl.cerios.clog.database.AuthDO;
+import nl.cerios.clog.database.BlogDAOSQL;
+import nl.cerios.clog.database.BlogDO;
+import nl.cerios.clog.database.PostDAOSQL;
+import nl.cerios.clog.database.PostDO;
+import nl.cerios.clog.database.ProfileDAOSQL;
+import nl.cerios.clog.database.ProfileDO;
 
 import org.owasp.esapi.ESAPI;
 
 import nl.cerios.clog.exception.AuthenticationException;
 import nl.cerios.clog.exception.InvalidInputException;
 import nl.cerios.clog.exception.ProcessingException;
+import nl.cerios.clog.object.BlogDTO;
+import nl.cerios.clog.object.PostDTO;
+import nl.cerios.clog.object.ProfileDTO;
 
+import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.Charset;
+import java.security.SecureRandom;
 import java.sql.SQLException;
+
+import org.owasp.esapi.errors.EncryptionException;
 import org.owasp.esapi.errors.ValidationException;
+import org.owasp.esapi.reference.crypto.JavaEncryptor;
 
 public class ClogLogic {
-	ProfileDAOSQL dbProfile = new ProfileDAOSQL();
-	BlogDAOSQL dbBlog = new BlogDAOSQL();
-	PostDAOSQL dbPost = new PostDAOSQL();
+	private SecureRandom random = new SecureRandom();
+
+	private ProfileDAOSQL dbProfile = new ProfileDAOSQL();
+	private BlogDAOSQL dbBlog = new BlogDAOSQL();
+	private PostDAOSQL dbPost = new PostDAOSQL();
+	private AuthDAOSQL dbHash = new AuthDAOSQL();
 	
 	//TODO: Implement images
 	//ImageDAOSQL dbPic;
-	
-	//TODO: Rewrite authentication for salt and hash in db
-	Authenticator authenticator;
 	
 	//GET: DATA -> DOMAIN -> CLEAN
 	//INSERT: DOMAIN -> CLEAN -> DATA
@@ -51,11 +59,11 @@ public class ClogLogic {
 	}
 	
 	//====Post====/
-	public PostDO getPost(int postId) 
+	public PostDTO getPost(int postId) 
 		throws ProcessingException {
-		PostDTO postData = null; 
-		PostDO postDomain = null;
-		PostDO cleanPost = null;
+		PostDO postData = null; 
+		PostDTO postDomain = null;
+		PostDTO cleanPost = null;
 		
 		try {
 			postData = dbPost.getPostById(postId);		
@@ -71,7 +79,7 @@ public class ClogLogic {
 		}
 		
 		try {
-			postDomain = postDataToDomain(postData, dbBlog.getProfileIdByBlogId(postData.getBlogId()));			
+			postDomain = postDataToObject(postData, dbBlog.getProfileIdByBlogId(postData.getBlogId()));			
 			cleanPost = sanitizePost(postDomain);
 		}
 		catch (SQLException | ValidationException e) {
@@ -81,11 +89,11 @@ public class ClogLogic {
 		return cleanPost;
 	}
 	
-	public List<PostDO> getPostsRecent(int count) 
+	public List<PostDTO> getPostsRecent(int count) 
 		throws ProcessingException {
-		List<PostDTO> postsData = new ArrayList<PostDTO>();
-		List<PostDO> postsDomain = new ArrayList<PostDO>();
-		List<PostDO> cleanPosts = new ArrayList<PostDO>();
+		List<PostDO> postsData = new ArrayList<PostDO>();
+		List<PostDTO> postsDomain = new ArrayList<PostDTO>();
+		List<PostDTO> cleanPosts = new ArrayList<PostDTO>();
 		
 		try {
 			postsData = dbPost.getPostsRecent(count);		
@@ -101,9 +109,9 @@ public class ClogLogic {
 		}
 		
 		try {
-			for (PostDTO p : postsData)
+			for (PostDO p : postsData)
 			{
-				postsDomain.add(postDataToDomain(p, dbBlog.getProfileIdByBlogId(p.getBlogId())));
+				postsDomain.add(postDataToObject(p, dbBlog.getProfileIdByBlogId(p.getBlogId())));
 			}
 			cleanPosts = sanitizePosts(postsDomain);	
 		}
@@ -114,11 +122,11 @@ public class ClogLogic {
 		return cleanPosts;
 	}
 	
-	public List<PostDO> getPostsByBlog(int blogId, int count) 
+	public List<PostDTO> getPostsByBlog(int blogId, int count) 
 		throws ProcessingException {
-		List<PostDTO> postsData = new ArrayList<PostDTO>();
-		List<PostDO> postsDomain = new ArrayList<PostDO>();
-		List<PostDO> cleanPosts = new ArrayList<PostDO>();
+		List<PostDO> postsData = new ArrayList<PostDO>();
+		List<PostDTO> postsDomain = new ArrayList<PostDTO>();
+		List<PostDTO> cleanPosts = new ArrayList<PostDTO>();
 		
 		try{
 			postsData = dbPost.getPostsByBlogId(blogId, count);
@@ -134,14 +142,13 @@ public class ClogLogic {
 		}
 		
 		try {
-			for(PostDTO p : postsData)
+			for (PostDO p : postsData)
 			{
-				postsDomain.add(postDataToDomain(p, dbBlog.getProfileIdByBlogId(p.getBlogId())));
+				postsDomain.add(postDataToObject(p, dbBlog.getProfileIdByBlogId(p.getBlogId())));
 			}
 			cleanPosts = sanitizePosts(postsDomain);
 		}
-		catch (SQLException | ValidationException e)
-		{
+		catch (SQLException | ValidationException e) {
 			throw new ProcessingException("Error processing posts.",  e);
 		}
 		
@@ -150,12 +157,12 @@ public class ClogLogic {
 	
 	//TODO: Or not TODO? //public List<PostDO> getPostsByBlogSince(int blogId, ZonedDateTime since)
 	
-	public int insertPost(PostDO newPost, ProfileDO user) 
+	public int insertPost(PostDTO newPost, ProfileDTO user) 
 			throws AuthenticationException, InvalidInputException, ProcessingException {
 		int newId = 0;
-		PostDO cleanPost = null;
-		PostDTO postData = null;
-		BlogDTO blog = null;
+		PostDTO cleanPost = null;
+		PostDO postData = null;
+		BlogDO blog = null;
 		
 		//Authentication problem
 		if (user == null)
@@ -182,7 +189,7 @@ public class ClogLogic {
 			
 			try{
 				cleanPost = sanitizePost(newPost);
-				postData = postDomainToData(cleanPost);
+				postData = postObjectToData(cleanPost);
 			}
 			catch(ValidationException e)
 			{
@@ -201,17 +208,21 @@ public class ClogLogic {
 		return newId;
 	}
 	
-	public boolean updatePost(PostDO updatedPost, ProfileDO user) 
+	public boolean updatePost(PostDTO updatedPost, ProfileDTO user) 
 			throws AuthenticationException, InvalidInputException, ProcessingException {
 		boolean success = false;		
-		PostDO cleanPost = null;
-		PostDTO postData = null;
-		BlogDTO blog = null;
+		PostDTO cleanPost = null;
+		PostDO postData = null;
+		BlogDO blog = null;
 		
 		//Authentication problem
 		if (user == null)
 		{
 			throw new AuthenticationException("User not logged in.");
+		}
+		else if (user.getId() != updatedPost.getProfileId())
+		{
+			throw new AuthenticationException("Incorrect User logged in.");
 		}
 		
 		//Make sure everything exists
@@ -233,7 +244,7 @@ public class ClogLogic {
 			
 			try{
 				cleanPost = sanitizePost(updatedPost);
-				postData = postDomainToData(cleanPost);
+				postData = postObjectToData(cleanPost);
 			}
 			catch(ValidationException e)
 			{
@@ -254,11 +265,11 @@ public class ClogLogic {
 	}
 	
 	//====Blog====//
-	public BlogDO getBlog(int blogId)
+	public BlogDTO getBlog(int blogId)
 		throws ProcessingException {
-		BlogDTO blogData = null;
-		BlogDO blogDomain = null;
-		BlogDO cleanBlog = null;
+		BlogDO blogData = null;
+		BlogDTO blogDomain = null;
+		BlogDTO cleanBlog = null;
 		
 		try {
 			blogData = dbBlog.getBlogById(blogId);
@@ -284,11 +295,11 @@ public class ClogLogic {
 		return cleanBlog;
 	}
 
-	public List<BlogDO> getBlogsByProfile(int profileId)
+	public List<BlogDTO> getBlogsByProfile(int profileId)
 			throws ProcessingException {
-		List<BlogDTO> blogsData = new ArrayList<BlogDTO>();
-		List<BlogDO> blogsDomain = new ArrayList<BlogDO>();
-		List<BlogDO> cleanBlogs = new ArrayList<BlogDO>();
+		List<BlogDO> blogsData = new ArrayList<BlogDO>();
+		List<BlogDTO> blogsDomain = new ArrayList<BlogDTO>();
+		List<BlogDTO> cleanBlogs = new ArrayList<BlogDTO>();
 		
 		try {
 			blogsData = dbBlog.getBlogsByProfileId(profileId);
@@ -304,7 +315,7 @@ public class ClogLogic {
 		}
 		
 		try {
-			for(BlogDTO b : blogsData)
+			for(BlogDO b : blogsData)
 			{				
 				blogsDomain.add(blogDataToDomain(b));
 			}
@@ -318,12 +329,12 @@ public class ClogLogic {
 		return cleanBlogs;
 	}
 	
-	public int insertBlog(BlogDO newBlog, ProfileDO user) 
+	public int insertBlog(BlogDTO newBlog, ProfileDTO user) 
 			throws InvalidInputException, AuthenticationException, ProcessingException {
 		int newId = 0;
-		BlogDO cleanBlog = null;
-		BlogDTO blogData = null;
-		ProfileDTO profile = null;
+		BlogDTO cleanBlog = null;
+		BlogDO blogData = null;
+		ProfileDO profile = null;
 		
 		//Authentication problem
 		if (user == null)
@@ -354,7 +365,7 @@ public class ClogLogic {
 			
 			try {
 				cleanBlog = sanitizeBlog(newBlog);
-				blogData = blogDomainToData(cleanBlog);
+				blogData = blogObjectToData(cleanBlog);
 			}
 			catch(ValidationException e)
 			{
@@ -373,19 +384,19 @@ public class ClogLogic {
 		return newId;
 	}
 
-	public boolean updateBlog(BlogDO updatedBlog, ProfileDO user)
+	public boolean updateBlog(BlogDTO updatedBlog, ProfileDTO user)
 			throws InvalidInputException, AuthenticationException {
 		boolean success = false;
-		BlogDO cleanBlog = null;
-		BlogDTO blogData = null;
-		ProfileDTO profile = null;
+		BlogDTO cleanBlog = null;
+		BlogDO blogData = null;
+		ProfileDO profile = null;
 		
 		//Authentication problem
 		if (user == null)
 		{
 			throw new AuthenticationException("User not logged in");
 		}
-		else if (user.getId() == updatedBlog.getProfileId())
+		else if (user.getId() != updatedBlog.getProfileId())
 		{
 			throw new AuthenticationException("Incorrect User logged in.");
 		}
@@ -409,8 +420,8 @@ public class ClogLogic {
 			
 			try {
 				cleanBlog = sanitizeBlog(updatedBlog);
-				blogData = blogDomainToData(cleanBlog);
-				int newId = dbBlog.insertBlog(blogData);
+				blogData = blogObjectToData(cleanBlog);
+				int newId = dbBlog.updateBlog(blogData);
 				success = (newId != 0);
 			}
 			//Filtering | Insertion problem
@@ -423,11 +434,11 @@ public class ClogLogic {
 	}
 
 	//====Profile====//
-	public ProfileDO getProfile(int profileId)
+	public ProfileDTO getProfile(int profileId)
 			throws ProcessingException {
-		ProfileDTO profileData = null;
-		ProfileDO profileDomain = null;
-		ProfileDO cleanProfile = null;
+		ProfileDO profileData = null;
+		ProfileDTO profileDomain = null;
+		ProfileDTO cleanProfile = null;
 		
 		try {
 			profileData = dbProfile.getProfileById(profileId);
@@ -443,7 +454,7 @@ public class ClogLogic {
 		}
 		
 		try {
-			profileDomain = profileDataToDomain(profileData);
+			profileDomain = profileDataToObject(profileData);
 			cleanProfile = sanitizeProfile(profileDomain);	
 		}
 		catch(ValidationException e) {
@@ -453,18 +464,51 @@ public class ClogLogic {
 		return cleanProfile;
 	}
 	
-	public int insertProfile(ProfileDO newProfile, String password) 
-			throws InvalidInputException, ProcessingException {
-		int newId = 0;
+	public ProfileDTO getProfile(String username)
+			throws ProcessingException {
+		ProfileDO profileData = null;
+		ProfileDTO profileDomain = null;
+		ProfileDTO cleanProfile = null;
 		
-		ProfileDO cleanProfile = null;
-		ProfileDTO profileData = null;
+		try {
+			profileData = dbProfile.getProfileByName(username);
+		}
+		catch (SQLException e)
+		{
+			throw new ProcessingException("Error retrieving profile.", e);
+		}
+		
+		if (profileData == null)
+		{
+			throw new ProcessingException("Profile doesn't exist.");
+		}
+		
+		try {
+			profileDomain = profileDataToObject(profileData);
+			cleanProfile = sanitizeProfile(profileDomain);	
+		}
+		catch(ValidationException e) {
+			throw new ProcessingException("Error processing profile.", e);
+		}
+		
+		return cleanProfile;
+	}
+	
+	public int insertProfile(ProfileDTO newProfile, String password) 
+			throws InvalidInputException, ProcessingException {
+		if (password.equals(""))
+		{
+			throw new InvalidInputException("Password cannot be blank");
+		}
+		
+		int newId = 0;
+		ProfileDTO cleanProfile = null;
+		ProfileDO profileData = null;
 		
 		try{
 			cleanProfile = sanitizeProfile(newProfile);
-			profileData = profileDomainToData(cleanProfile);
-		}	
-		
+			profileData = profileObjectToData(cleanProfile);
+		}		
 		catch(ValidationException e)
 		{
 			throw new ProcessingException("Error processing Profile.", e);
@@ -473,9 +517,9 @@ public class ClogLogic {
 		
 		try {
 			newId = dbProfile.insertProfile(profileData);
-			authenticator.InsertPassword(profileData.getName(), password);
-		}
-		
+			AuthDO newUser = new AuthDO(newId, hashPassword(charsToBytes(password.toCharArray())));
+			dbHash.insertAuth(newUser);			
+		}		
 		catch(SQLException e)
 		{
 			throw new ProcessingException("Error saving Profile.", e);
@@ -484,18 +528,18 @@ public class ClogLogic {
 		return newId;
 	}
 	
-	public boolean updateProfile(ProfileDO updatedProfile, ProfileDO user)
+	public boolean updateProfile(ProfileDTO updatedProfile, ProfileDTO user)
 			throws InvalidInputException, AuthenticationException{
 		boolean success = false;
-		ProfileDO cleanProfile = null;
-		ProfileDTO profileData = null;
+		ProfileDTO cleanProfile = null;
+		ProfileDO profileData = null;
 		
 		//Authentication problem
 		if (user == null)
 		{
 			throw new AuthenticationException("User not logged in");
 		}
-		else if (user.getId() == updatedProfile.getId())
+		else if (user.getId() != updatedProfile.getId())
 		{
 			throw new AuthenticationException("Incorrect User logged in.");
 		}
@@ -505,7 +549,7 @@ public class ClogLogic {
 		{
 			try {
 				cleanProfile = sanitizeProfile(updatedProfile);
-				profileData = profileDomainToData(cleanProfile);
+				profileData = profileObjectToData(cleanProfile);
 				int newId = dbProfile.insertProfile(profileData);
 				success = (newId != 0);
 			}
@@ -519,11 +563,43 @@ public class ClogLogic {
 		return success;
 	}
 
+	public boolean updatePassword(String oldPassword, String newPassword, String newPasswordRepeat, ProfileDTO user)
+			throws InvalidInputException, AuthenticationException, ProcessingException {
+		boolean success = false;
+		
+		if (user == null)
+		{
+			throw new AuthenticationException("User not logged in");
+		}
+		
+		if (authenticateUser(user.getName(), oldPassword) == false)
+		{
+			throw new AuthenticationException("Invalid Credentials.");
+		}
+		if (newPassword.equals(newPasswordRepeat) == false)
+		{
+			throw new InvalidInputException("New passwords don't match");
+		}
+		if (newPassword.equals("") || newPasswordRepeat.equals(""))
+		{
+			throw new InvalidInputException("Password cannot be blank");
+		}
+		
+		try {
+			String hash = hashPassword(charsToBytes(newPassword.toCharArray()));
+			success = dbHash.updateAuth(new AuthDO(user.getId(), hash));
+		} catch (SQLException e) {
+			throw new ProcessingException("Error updating profile.");
+		}
+		
+		return success;
+	}
+	
 	//====Cleaning & Converting====//
 	//Clean Post
-	public PostDO sanitizePost(PostDO post)
+	private PostDTO sanitizePost(PostDTO post)
 		throws ValidationException {
-		PostDO cleanPost = null;
+		PostDTO cleanPost = null;
 
 		if (post != null)
 		{
@@ -536,18 +612,18 @@ public class ClogLogic {
 			cleanTitle = ESAPI.validator().getValidSafeHTML("postTitle", title, 48, true);
 			cleanText = ESAPI.validator().getValidSafeHTML("postText", text, 64000, true);
 
-			cleanPost = new PostDO(post.getId(), post.getBlogId(), post.getProfileId(), post.getTimestamp(), cleanTitle, cleanText);
+			cleanPost = new PostDTO(post.getId(), post.getBlogId(), post.getProfileId(), post.getTimestamp(), cleanTitle, cleanText);
 		}
 		
 		return cleanPost;
 	}
 	
-	public List<PostDO> sanitizePosts(List<PostDO> postList)
+	private List<PostDTO> sanitizePosts(List<PostDTO> postList)
 			throws ValidationException {
-		List<PostDO> cleanList = new ArrayList<PostDO>();
+		List<PostDTO> cleanList = new ArrayList<PostDTO>();
 
-		for (PostDO p : postList) {
-			PostDO cleanPost = sanitizePost(p);
+		for (PostDTO p : postList) {
+			PostDTO cleanPost = sanitizePost(p);
 			cleanList.add(cleanPost);
 		}
 
@@ -555,9 +631,9 @@ public class ClogLogic {
 	}
 	
 	//Clean Blog	
-	public BlogDO sanitizeBlog(BlogDO blog) 
+	private BlogDTO sanitizeBlog(BlogDTO blog) 
 		throws ValidationException {
-    	BlogDO cleanBlog = null;
+    	BlogDTO cleanBlog = null;
     	
     	if (blog != null)
     	{
@@ -570,18 +646,18 @@ public class ClogLogic {
     		cleanTitle = ESAPI.validator().getValidSafeHTML("blogTitle", title, 48, true);
     		cleanDescription = ESAPI.validator().getValidSafeHTML("blogDescription", description, 32000, true);
     	
-    		cleanBlog = new BlogDO(blog.getId(), blog.getProfileId(), cleanTitle, cleanDescription);
+    		cleanBlog = new BlogDTO(blog.getId(), blog.getProfileId(), cleanTitle, cleanDescription);
     	}
     	
     	return cleanBlog;
 	}
 
-	public List<BlogDO> sanitizeBlogs(List<BlogDO> blogList)
+	private List<BlogDTO> sanitizeBlogs(List<BlogDTO> blogList)
 			throws ValidationException {
-		List<BlogDO> cleanList = new ArrayList<BlogDO>();
+		List<BlogDTO> cleanList = new ArrayList<BlogDTO>();
 
-		for (BlogDO p : blogList) {
-			BlogDO cleanBlog = sanitizeBlog(p);
+		for (BlogDTO p : blogList) {
+			BlogDTO cleanBlog = sanitizeBlog(p);
 			cleanList.add(cleanBlog);
 		}
 
@@ -589,9 +665,9 @@ public class ClogLogic {
 	}
 	
 	// Clean Profile
-	public ProfileDO sanitizeProfile(ProfileDO profile) 
+	private ProfileDTO sanitizeProfile(ProfileDTO profile) 
 		throws ValidationException {
-    	ProfileDO cleanProfile = null;
+    	ProfileDTO cleanProfile = null;
     	
     	if (profile != null)
     	{
@@ -604,18 +680,18 @@ public class ClogLogic {
 	    	cleanName = ESAPI.validator().getValidSafeHTML("profileName", name, 16, true);
 	    	cleanMotto = ESAPI.validator().getValidSafeHTML("profileMotto", motto, 32, true);
 	    	
-	    	cleanProfile = new ProfileDO(profile.getId(), cleanName, cleanMotto, profile.getJoinDate());
+	    	cleanProfile = new ProfileDTO(profile.getId(), cleanName, cleanMotto, profile.getJoinDate());
     	}
     	
     	return cleanProfile;
 	}
 
-	public List<ProfileDO> sanitizeProfiles(List<ProfileDO> profileList)
+	private List<ProfileDTO> sanitizeProfiles(List<ProfileDTO> profileList)
 			throws ValidationException {
-		List<ProfileDO> cleanList = new ArrayList<ProfileDO>();
+		List<ProfileDTO> cleanList = new ArrayList<ProfileDTO>();
 
-		for (ProfileDO p : profileList) {
-			ProfileDO cleanProfile = sanitizeProfile(p);
+		for (ProfileDTO p : profileList) {
+			ProfileDTO cleanProfile = sanitizeProfile(p);
 			cleanList.add(cleanProfile);
 		}
 
@@ -623,41 +699,30 @@ public class ClogLogic {
 	}
 	
 	//Convert Post
-	public PostDTO postDomainToData(PostDO post) {
-		PostDTO convertedPost = null;
+	private PostDO postObjectToData(PostDTO post) {
+		PostDO convertedPost = null;
 		
 		if (post != null)
 		{
-			convertedPost = new PostDTO(post.getId(), post.getBlogId(), post.getTimestamp(), post.getTitle(), post.getText());
+			convertedPost = new PostDO(post.getId(), post.getBlogId(), post.getTimestamp(), post.getTitle(), post.getText());
 		}
 		
 		return convertedPost;
 	}
 	
-	public PostDO postDataToDomain(PostDTO post, int profileId) {
-		PostDO convertedPost = null;
+	private PostDTO postDataToObject(PostDO post, int profileId) {
+		PostDTO convertedPost = null;
 		
 		if (post != null)
 		{
-			convertedPost = new PostDO(post.getId(), post.getBlogId(), profileId, post.getTimestamp(), post.getTitle(), post.getText());
+			convertedPost = new PostDTO(post.getId(), post.getBlogId(), profileId, post.getTimestamp(), post.getTitle(), post.getText());
 		}
 		
 		return convertedPost;
 	}
 
 	//Convert Blog 
-	public BlogDTO blogDomainToData(BlogDO blog) {
-		BlogDTO convertedBlog = null;
-		
-		if (blog != null)
-		{
-			convertedBlog = new BlogDTO(blog.getId(), blog.getProfileId(), blog.getTitle(), blog.getDescription());
-		}
-		
-		return convertedBlog;
-	}
-	
-	public BlogDO blogDataToDomain(BlogDTO blog) {
+	private BlogDO blogObjectToData(BlogDTO blog) {
 		BlogDO convertedBlog = null;
 		
 		if (blog != null)
@@ -667,20 +732,20 @@ public class ClogLogic {
 		
 		return convertedBlog;
 	}
-
-	// Convert Profile
-	public ProfileDTO profileDomainToData(ProfileDO profile) {
-		ProfileDTO convertedProfile = null;
+	
+	private BlogDTO blogDataToDomain(BlogDO blog) {
+		BlogDTO convertedBlog = null;
 		
-		if (profile != null)
+		if (blog != null)
 		{
-			convertedProfile = new ProfileDTO(profile.getId(), profile.getName(), profile.getMotto(), profile.getJoinDate());
+			convertedBlog = new BlogDTO(blog.getId(), blog.getProfileId(), blog.getTitle(), blog.getDescription());
 		}
 		
-		return convertedProfile;
+		return convertedBlog;
 	}
-	
-	public ProfileDO profileDataToDomain(ProfileDTO profile) {
+
+	//Convert Profile
+	private ProfileDO profileObjectToData(ProfileDTO profile) {
 		ProfileDO convertedProfile = null;
 		
 		if (profile != null)
@@ -691,7 +756,114 @@ public class ClogLogic {
 		return convertedProfile;
 	}
 	
+	private ProfileDTO profileDataToObject(ProfileDO profile) {
+		ProfileDTO convertedProfile = null;
+		
+		if (profile != null)
+		{
+			convertedProfile = new ProfileDTO(profile.getId(), profile.getName(), profile.getMotto(), profile.getJoinDate());
+		}
+		
+		return convertedProfile;
+	}
+	
 	//====Auth====//
-	//public int checkPassword(String username, String password) throws InvalidInputException, AuthenticationException
-	//public bool insertPassword(ProfileDO profile, String password) throws InvalidInputException, AuthenticationException
+	public boolean authenticateUser(String username, String password)
+		throws InvalidInputException {
+		boolean success = false;
+		
+		if ((username.equals("") || password.equals("")) &&
+			(username == null || password == null))
+		{
+			throw new InvalidInputException("Invalid Credentials.");
+		}
+		
+		int profileId = 0;
+		AuthDO storedHash = null;
+		
+		try {
+			profileId = dbProfile.getProfileByName(username).getId();
+			storedHash = dbHash.getAuthById(profileId);
+		}
+		catch(SQLException e)
+		{
+			throw new InvalidInputException("Invalid Credentials.", e);
+		}
+		
+		success = verifyHash(charsToBytes(password.toCharArray()), storedHash.getHash());
+		
+		return success;
+	}
+	
+	private String hashPassword(byte[] password) 
+			throws InvalidInputException {
+		String hash = new String(hashWithSalt(password, getRandomSalt()));
+		return hash;
+	}
+	
+	private byte[] hashWithSalt(byte[] input, byte[] salt)
+		throws InvalidInputException {
+		byte[] saltedHash = new byte[32];
+
+		if (input != null)
+		{
+			try {
+				String hash = JavaEncryptor.getInstance().hash(new String(input), new String(salt));
+				
+				byte[] salted = salt;
+				byte[] hashed = charsToBytes(hash.toCharArray());
+				
+				saltedHash = new byte[salted.length + hashed.length + 1];
+				
+				System.arraycopy(salted, 0, saltedHash, 0, salted.length);
+				saltedHash[salted.length] = ':';
+				System.arraycopy(hashed, 0, saltedHash, salted.length + 1, hashed.length);	
+			} 
+			catch (EncryptionException e) {
+				throw new InvalidInputException(e);
+			}
+		}
+		
+		if (input == null || saltedHash == null)
+		{
+			throw new InvalidInputException("Authentication Error.");
+		}
+
+		return saltedHash;
+	}
+
+	private boolean verifyHash(byte[] input, String saltedHash)
+			throws InvalidInputException {
+		boolean success = false;
+		
+		byte[] raw = input;
+		byte[] salt = charsToBytes(saltedHash.split(":")[0].toCharArray());
+		
+		String testHash = new String(hashWithSalt(raw, salt));
+		
+		if (testHash.trim().equals(saltedHash.trim()))
+		{
+			success = true;
+		}
+		
+		return success;
+	}
+	
+	private byte[] getRandomSalt() {
+		String salt =  new BigInteger(132, random).toString(32);
+		salt = salt.substring(0, 16);
+		return charsToBytes(salt.toCharArray());
+	}
+	
+    private byte[] charsToBytes(char[] chars){
+        Charset charset = Charset.forName("UTF-8");
+        ByteBuffer byteBuffer = charset.encode(CharBuffer.wrap(chars));
+        return Arrays.copyOf(byteBuffer.array(), chars.length);
+    }
+
+    private char[] bytesToChars(byte[] bytes){
+        Charset charset = Charset.forName("UTF-8");
+        CharBuffer charBuffer = charset.decode(ByteBuffer.wrap(bytes));
+        return Arrays.copyOf(charBuffer.array(), bytes.length);    
+    }
 }

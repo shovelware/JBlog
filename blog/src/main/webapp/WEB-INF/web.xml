@@ -3,7 +3,7 @@
   <display-name>Cerios Blog Platform</display-name>
   <servlet>
     <servlet-name>ClogServlet</servlet-name>
-    <servlet-class>nl.cerios.clog.ui.ClogServlet2</servlet-class>
+    <servlet-class>nl.cerios.clog.ui.ClogServlet</servlet-class>
     <load-on-startup>0</load-on-startup>
   </servlet>
   <servlet-mapping>

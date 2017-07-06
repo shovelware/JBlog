@@ -16,6 +16,12 @@
 	<tr><td>===</td></tr>
 	<tr><td>TODO: ViewProfile is POST, we get that resend message when refreshing.</td></tr>
 	<tr><td>===</td></tr>
+	<tr><td>TODO: Authentication needs a rewrite, hashing, salting, authdb.</td></tr>
+	<tr><td>===</td></tr>
+	<tr><td>TODO: Edit forms still use old system</td></tr>
+	<tr><td>===</td></tr>
+	<tr><td>TODO: SQL API usage: in POM or database independent?</td></tr>
+	<tr><td>===</td></tr>
 	<tr><td>TODO: Finish implementing blog and profile editing</td></tr>
 	<tr><td>===</td></tr>
 	<tr><td>TODO: Unit Test SQL interfaces</td></tr>

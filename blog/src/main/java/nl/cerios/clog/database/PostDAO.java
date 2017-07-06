@@ -1,22 +1,17 @@
 package nl.cerios.clog.database;
 
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.List;
 
 interface PostDAO {
+	PostDO getPostById(int postId) throws SQLException;
 	
-	PostDTO getPostById(int postId);
-	List<PostDTO> getPostByAuthorId(int authorId);
-	List<PostDTO> getPostByBlogId(int blogId);
-	
-	//These functions don't copy body text, for reducing overhead
-	PostDTO getPostHeaderById(int postId);
-	List<PostDTO> getPostHeaderByAuthorId(int authorId);
-	List<PostDTO> getPostHeaderByBlogId(int blogId);
+	List<PostDO> getPostsByBlogId(int blogId, int count) throws SQLException;
 
-	List<PostDTO> getPostByTimestamp(LocalDateTime since, int count);
+	List<PostDO> getPostsSinceTimestamp(LocalDateTime since, int count) throws SQLException;
 	
-	boolean InsertPost(PostDTO newPost);
-	boolean UpdatePost(PostDTO updatedPost);	
-	boolean DeletePost(int postId);
+	int insertPost(PostDO newPost) throws SQLException;
+	int updatePost(PostDO updatedPost) throws SQLException;	
+	boolean deletePost(int postId) throws SQLException;
 }

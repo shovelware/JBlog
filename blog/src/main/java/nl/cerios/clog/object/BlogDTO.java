@@ -1,6 +1,6 @@
-package nl.cerios.clog.database;
+package nl.cerios.clog.object;
 
-public final class BlogDTO {
+public class BlogDTO {
 	private int id;
 	private int profileId;
 	private String title;
@@ -17,5 +17,4 @@ public final class BlogDTO {
 	public int getProfileId() { return profileId; }
 	public String getTitle() { return title; }
 	public String getDescription() { return description; }
-	
 }

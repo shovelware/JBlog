@@ -4,11 +4,11 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-import nl.cerios.clog.business.AppConfiguration;
-
 public class ConnectionFactory {
 
-	private AppConfiguration config;
+	private String username;
+	private String password;
+	private String url;
 	
 	String driverClassName = "com.mysql.jdbc.Driver";
 
@@ -22,14 +22,16 @@ public class ConnectionFactory {
 		}
 	}
 
-	public void init(AppConfiguration config)
+	public void init(String url, String username, String password)
 	{
-		this.config = config;
+		this.url = url;
+		this.username = username;
+		this.password = password;
 	}
 	
 	public Connection getConnection() throws SQLException {
 		Connection conn = null;
-		conn = DriverManager.getConnection(config.getUrl() + "?useSSL=false", config.getUsername(), config.getPassword());
+		conn = DriverManager.getConnection(url + "?useSSL=false", username, password);
 		return conn;
 	}
 

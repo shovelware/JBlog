@@ -1,4 +1,4 @@
-<%@attribute name="profile" required="true" type="nl.cerios.clog.domain.ProfileDO"%>
+<%@attribute name="profile" required="true" type="nl.cerios.clog.object.ProfileDTO"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <%@taglib prefix="t" tagdir="/WEB-INF/tags"%>
 <c:url value="/static/img/avatar.png" var="avatarimg" />

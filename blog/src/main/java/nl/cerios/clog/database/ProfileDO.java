@@ -1,8 +1,8 @@
-package nl.cerios.clog.domain;
+package nl.cerios.clog.database;
 
 import java.time.LocalDateTime;
 
-public class ProfileDO {
+public final class ProfileDO {
 	private int id;
 	private String name;
 	private String motto;
@@ -14,7 +14,7 @@ public class ProfileDO {
 		this.motto = motto;
 		this.joinDate = joinDate;
 	}
-	
+
 	public int getId() { return id;	}
 	public String getName() { return name; }
 	public String getMotto() { return motto; }
